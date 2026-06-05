@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <system.webServer>
+    <!-- Check if URL Rewrite module is installed before using rewrite rules -->
+    <rewrite>
+      <rules>
+        <!-- Angular Routes - Rewrite all non-file/non-directory requests to index.html -->
+        <rule name="Angular Routes" stopProcessing="true">
+          <match url=".*" />
+          <conditions logicalGrouping="MatchAll">
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+            <!-- Exclude API, Socket.IO, and uploads from Angular routing -->
+            <add input="{REQUEST_URI}" pattern="^/(api|socket\.io|uploads)" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/index.html" />
+        </rule>
+      </rules>
+    </rewrite>
+    
+    <!-- MIME Types for static content -->
+    <staticContent>
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+      <mimeMap fileExtension=".woff" mimeType="application/font-woff" />
+      <mimeMap fileExtension=".woff2" mimeType="application/font-woff2" />
+      <mimeMap fileExtension=".ttf" mimeType="application/font-ttf" />
+      <mimeMap fileExtension=".eot" mimeType="application/vnd.ms-fontobject" />
+    </staticContent>
+    
+    <!-- Security Headers -->
+    <httpProtocol>
+      <customHeaders>
+        <add name="X-Content-Type-Options" value="nosniff" />
+        <add name="X-Frame-Options" value="SAMEORIGIN" />
+        <add name="X-XSS-Protection" value="1; mode=block" />
+      </customHeaders>
+    </httpProtocol>
+    
+    <!-- Cache static assets for 1 year -->
+    <location path="assets">
+      <system.webServer>
+        <staticContent>
+          <clientCache cacheControlMode="UseMaxAge" cacheControlMaxAge="365.00:00:00" />
+        </staticContent>
+      </system.webServer>
+    </location>
+    
+    <!-- Don't cache HTML files -->
+    <location path="index.html">
+      <system.webServer>
+        <httpProtocol>
+          <customHeaders>
+            <add name="Cache-Control" value="no-cache, no-store, must-revalidate" />
+            <add name="Pragma" value="no-cache" />
+            <add name="Expires" value="0" />
+          </customHeaders>
+        </httpProtocol>
+      </system.webServer>
+    </location>
+  </system.webServer>
+</configuration>
+
+
+
+
+
+
+

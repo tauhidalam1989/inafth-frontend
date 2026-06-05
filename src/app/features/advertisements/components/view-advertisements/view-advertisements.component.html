@@ -1,0 +1,272 @@
+<div class="view-advertisements-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h2 class="page-title">
+          <i class="fas fa-chart-line me-2"></i>
+          {{ getTranslation('viewAdvertisements') }}
+        </h2>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-filter me-2"></i>
+              {{ getTranslation('filters') }}
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label for="searchViewAdvertisements" class="form-label">
+                  <i class="fas fa-search me-2"></i>
+                  {{ getTranslation('search') }}
+                </label>
+                <input
+                  type="text"
+                  id="searchViewAdvertisements"
+                  [(ngModel)]="searchTerm"
+                  (input)="filterAdvertisements()"
+                  class="form-control"
+                  placeholder="{{ getTranslation('searchAdvertisements') }}"
+                />
+              </div>
+
+              <div class="col-md-3">
+                <label for="typeFilterView" class="form-label">
+                  <i class="fas fa-tag me-2"></i>
+                  {{ getTranslation('type') }}
+                </label>
+                <select
+                  id="typeFilterView"
+                  [(ngModel)]="selectedType"
+                  (change)="filterAdvertisements()"
+                  class="form-select"
+                >
+                  <option value="all">{{ getTranslation('allTypes') }}</option>
+                  <option value="banner">{{ getTranslation('banner') }}</option>
+                  <option value="popup">{{ getTranslation('popup') }}</option>
+                  <option value="sidebar">{{ getTranslation('sidebar') }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-3">
+                <label for="statusFilterView" class="form-label">
+                  <i class="fas fa-toggle-on me-2"></i>
+                  {{ getTranslation('status') }}
+                </label>
+                <select
+                  id="statusFilterView"
+                  [(ngModel)]="selectedStatus"
+                  (change)="filterAdvertisements()"
+                  class="form-select"
+                >
+                  <option value="all">{{ getTranslation('allStatuses') }}</option>
+                  <option value="active">{{ getTranslation('active') }}</option>
+                  <option value="inactive">{{ getTranslation('inactive') }}</option>
+                  <option value="expired">{{ getTranslation('expired') }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-3">
+                <label for="dateRangeFilter" class="form-label">
+                  <i class="fas fa-calendar me-2"></i>
+                  {{ getTranslation('dateRange') }}
+                </label>
+                <select
+                  id="dateRangeFilter"
+                  [(ngModel)]="selectedDateRange"
+                  (change)="filterAdvertisements()"
+                  class="form-select"
+                >
+                  <option value="all">{{ getTranslation('allDates') }}</option>
+                  <option value="today">{{ getTranslation('today') }}</option>
+                  <option value="week">{{ getTranslation('thisWeek') }}</option>
+                  <option value="month">{{ getTranslation('thisMonth') }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="stat-card bg-primary text-white">
+              <div class="stat-icon">
+                <i class="fas fa-eye"></i>
+              </div>
+              <div class="stat-content">
+                <h4>{{ getTotalImpressions() | number }}</h4>
+                <p>{{ getTranslation('totalImpressions') }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card bg-success text-white">
+              <div class="stat-icon">
+                <i class="fas fa-mouse-pointer"></i>
+              </div>
+              <div class="stat-content">
+                <h4>{{ getTotalClicks() | number }}</h4>
+                <p>{{ getTranslation('totalClicks') }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card bg-info text-white">
+              <div class="stat-icon">
+                <i class="fas fa-percentage"></i>
+              </div>
+              <div class="stat-content">
+                <h4>{{ getAverageCTR() | number:'1.2-2' }}%</h4>
+                <p>{{ getTranslation('averageCTR') }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card bg-warning text-white">
+              <div class="stat-icon">
+                <i class="fas fa-ad"></i>
+              </div>
+              <div class="stat-content">
+                <h4>{{ advertisements.length }}</h4>
+                <p>{{ getTranslation('totalAdvertisements') }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advertisements Table -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>
+                {{ getTranslation('advertisementsList') }} ({{ filteredAdvertisements.length }})
+              </h5>
+              <div class="table-actions">
+                <button class="btn btn-outline-primary btn-sm me-2" (click)="exportData()">
+                  <i class="fas fa-download me-1"></i>
+                  {{ getTranslation('export') }}
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" (click)="printReport()">
+                  <i class="fas fa-print me-1"></i>
+                  {{ getTranslation('print') }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-dark">
+                  <tr>
+                    <th (click)="toggleSort('title')" class="sortable">
+                      {{ getTranslation('title') }}
+                      <i [class]="getSortIcon('title')" class="ms-1"></i>
+                    </th>
+                    <th (click)="toggleSort('type')" class="sortable">
+                      {{ getTranslation('type') }}
+                      <i [class]="getSortIcon('type')" class="ms-1"></i>
+                    </th>
+                    <th (click)="toggleSort('status')" class="sortable">
+                      {{ getTranslation('status') }}
+                      <i [class]="getSortIcon('status')" class="ms-1"></i>
+                    </th>
+                    <th (click)="toggleSort('startDate')" class="sortable">
+                      {{ getTranslation('startDate') }}
+                      <i [class]="getSortIcon('startDate')" class="ms-1"></i>
+                    </th>
+                    <th (click)="toggleSort('endDate')" class="sortable">
+                      {{ getTranslation('endDate') }}
+                      <i [class]="getSortIcon('endDate')" class="ms-1"></i>
+                    </th>
+                    <th (click)="toggleSort('clicks')" class="sortable">
+                      {{ getTranslation('clicks') }}
+                      <i [class]="getSortIcon('clicks')" class="ms-1"></i>
+                    </th>
+                    <th (click)="toggleSort('impressions')" class="sortable">
+                      {{ getTranslation('impressions') }}
+                      <i [class]="getSortIcon('impressions')" class="ms-1"></i>
+                    </th>
+                    <th (click)="toggleSort('ctr')" class="sortable">
+                      {{ getTranslation('ctr') }}
+                      <i [class]="getSortIcon('ctr')" class="ms-1"></i>
+                    </th>
+                    <th>{{ getTranslation('actions') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let advertisement of filteredAdvertisements">
+                    <td>
+                      <div class="advertisement-info">
+                        <img [src]="advertisement.imageUrl" [alt]="advertisement.title" class="ad-thumbnail">
+                        <div class="ad-details">
+                          <strong>{{ advertisement.title }}</strong>
+                          <small class="text-muted d-block">{{ advertisement.description }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="getTypeBadgeClass(advertisement.type)">
+                        {{ getTypeDisplayName(advertisement.type) }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="getStatusBadgeClass(advertisement.status)">
+                        {{ getStatusDisplayName(advertisement.status) }}
+                      </span>
+                    </td>
+                    <td>{{ advertisement.startDate | date:'short' }}</td>
+                    <td>{{ advertisement.endDate | date:'short' }}</td>
+                    <td>{{ advertisement.clicks | number }}</td>
+                    <td>{{ advertisement.impressions | number }}</td>
+                    <td>
+                      <span class="ctr-value" [ngClass]="getCTRClass(advertisement.ctr)">
+                        {{ advertisement.ctr | number:'1.2-2' }}%
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-info" [title]="getTranslation('viewDetails')">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-primary" [title]="getTranslation('edit')">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" [title]="getTranslation('delete')">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="filteredAdvertisements.length === 0" class="text-center py-5">
+              <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">{{ getTranslation('noAdvertisementsFound') }}</h5>
+              <p class="text-muted">{{ getTranslation('tryAdjustingFilters') }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,243 @@
+<div class="screen-discovery-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="page-title">
+            <i class="fas fa-search me-2"></i>
+            {{ getTranslation('networkScanning') }}
+          </h2>
+          <div class="d-flex gap-2">
+            <button 
+              class="btn btn-success"
+              (click)="openManualForm()"
+            >
+              <i class="fas fa-plus me-2"></i>
+              {{ getTranslation('addManualScreen') || 'Add Manual Screen' }}
+            </button>
+            <button 
+              class="btn btn-primary"
+              (click)="startScanning()"
+              [disabled]="isScanning"
+            >
+              <i class="fas fa-sync-alt me-2" [class.fa-spin]="isScanning"></i>
+              {{ isScanning ? getTranslation('scanning') : getTranslation('startScan') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="row mb-3" *ngIf="showSuccessMessage">
+      <div class="col-12">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="fas fa-check-circle me-2"></i>
+          {{ successMessage }}
+          <button type="button" class="btn-close" (click)="showSuccessMessage = false"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanning Progress -->
+    <div class="row mb-4" *ngIf="isScanning">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <div class="spinner-border text-primary me-3" role="status">
+                <span class="visually-hidden">{{ getTranslation('scanning') }}</span>
+              </div>
+              <div class="flex-grow-1">
+                <h5 class="mb-1">{{ getTranslation('scanningNetwork') }}</h5>
+                <p class="text-muted mb-0">{{ getTranslation('scanningDescription') }}</p>
+              </div>
+              <div class="text-end">
+                <strong class="text-primary">{{ scanProgress }}%</strong>
+              </div>
+            </div>
+            <div class="progress" style="height: 25px;">
+              <div 
+                class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                role="progressbar" 
+                [style.width.%]="scanProgress"
+                [attr.aria-valuenow]="scanProgress" 
+                aria-valuemin="0" 
+                aria-valuemax="100"
+              >
+                {{ scanProgress }}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-3" *ngIf="!isScanning && discoveredDevices.length > 0">
+      <div class="col-12">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="searchTerm"
+            (input)="filterDevices()"
+            [placeholder]="getTranslation('searchDevices')"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Discovered Devices List -->
+    <div class="row" *ngIf="!isScanning">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-tv me-2"></i>
+              {{ getTranslation('discoveredDevices') }} 
+              <span class="badge bg-primary ms-2">{{ filteredDevices.length }}</span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <!-- No Devices Found -->
+            <div *ngIf="filteredDevices.length === 0 && !isScanning" class="text-center py-5">
+              <i class="fas fa-tv fa-3x text-muted mb-3"></i>
+              <p class="text-muted">{{ getTranslation('noDevicesFound') }}</p>
+              <button class="btn btn-primary" (click)="startScanning()">
+                <i class="fas fa-sync-alt me-2"></i>
+                {{ getTranslation('startScan') }}
+              </button>
+            </div>
+
+            <!-- Devices Grid -->
+            <div class="row g-3" *ngIf="filteredDevices.length > 0">
+              <div class="col-md-6 col-lg-4" *ngFor="let device of filteredDevices">
+                <div class="card h-100 device-card" [class.registered]="device.isRegistered">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div>
+                        <h6 class="card-title mb-1">
+                          <i [class]="getDeviceTypeIcon(device.deviceType)" class="me-2"></i>
+                          {{ device.name }}
+                        </h6>
+                        <small class="text-muted">{{ getDeviceTypeLabel(device.deviceType) }}</small>
+                      </div>
+                      <span 
+                        class="badge" 
+                        [ngClass]="getStatusBadgeClass(device.status)"
+                      >
+                        {{ device.status === 'online' ? getTranslation('online') : getTranslation('offline') }}
+                      </span>
+                    </div>
+
+                    <div class="device-info mb-3">
+                      <div class="mb-2">
+                        <i class="fas fa-network-wired me-2 text-muted"></i>
+                        <strong>{{ getTranslation('ipAddress') }}:</strong> {{ device.ipAddress }}
+                      </div>
+                      <div class="mb-2">
+                        <i class="fas fa-fingerprint me-2 text-muted"></i>
+                        <strong>{{ getTranslation('macAddress') }}:</strong> 
+                        <small class="font-monospace">{{ device.macAddress }}</small>
+                      </div>
+                      <div>
+                        <i class="fas fa-clock me-2 text-muted"></i>
+                        <strong>{{ getTranslation('lastSeen') }}:</strong> 
+                        {{ device.lastSeen | date:'short' }}
+                      </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                      <button 
+                        class="btn btn-sm"
+                        [class.btn-success]="!device.isRegistered"
+                        [class.btn-secondary]="device.isRegistered"
+                        [disabled]="device.isRegistered"
+                        (click)="openRegisterForm(device)"
+                      >
+                        <i class="fas" [class.fa-plus]="!device.isRegistered" [class.fa-check]="device.isRegistered" class="me-2"></i>
+                        {{ device.isRegistered ? getTranslation('registered') : getTranslation('register') }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registered Screens List -->
+    <div class="row mb-4" *ngIf="registeredScreens.length > 0">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-tv me-2"></i>
+              {{ getTranslation('registeredScreens') || 'Registered Screens' }}
+              <span class="badge bg-primary ms-2">{{ registeredScreens.length }}</span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>{{ getTranslation('name') || 'Name' }}</th>
+                    <th>{{ getTranslation('ipAddress') || 'IP Address' }}</th>
+                    <th>{{ getTranslation('location') || 'Location' }}</th>
+                    <th>{{ getTranslation('group') || 'Group' }}</th>
+                    <th>{{ getTranslation('assignedUser') || 'Assigned User' }}</th>
+                    <th>{{ getTranslation('status') || 'Status' }}</th>
+                    <th>{{ getTranslation('actions') || 'Actions' }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let screen of registeredScreens">
+                    <td>{{ screen.name }}</td>
+                    <td>{{ screen.ipAddress || '-' }}</td>
+                    <td>
+                      <span *ngIf="screen.subsiteName || screen.sectionName || screen.specialDivisionName">
+                        {{ screen.subsiteName || '' }}<span *ngIf="screen.sectionName"> / {{ screen.sectionName }}</span><span *ngIf="screen.specialDivisionName"> / {{ screen.specialDivisionName }}</span>
+                      </span>
+                      <span *ngIf="!screen.subsiteName && !screen.sectionName && !screen.specialDivisionName" class="text-muted">-</span>
+                    </td>
+                    <td>{{ screen.groupName || '-' }}</td>
+                    <td>{{ screen.assignedUserName || '-' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="{
+                        'bg-success': screen.status === 'online',
+                        'bg-warning': screen.status === 'playing',
+                        'bg-secondary': screen.status === 'offline'
+                      }">
+                        {{ screen.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm">
+                        <button class="btn btn-primary" [routerLink]="['/screens/create']" [queryParams]="{id: screen.id}" title="{{ getTranslation('edit') || 'Edit' }}">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger" (click)="deleteScreen(screen.id)" title="{{ getTranslation('delete') || 'Delete' }}">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+

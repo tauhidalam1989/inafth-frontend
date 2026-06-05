@@ -1,0 +1,31 @@
+<div class="app-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'" [class.rtl]="currentLanguage === 'ar'" [class.ltr]="currentLanguage === 'en'">
+  <!-- Mobile Menu Overlay -->
+  <div class="sidebar-overlay" 
+       [class.active]="isMobileMenuOpen" 
+       (click)="closeMobileMenu()"
+       *ngIf="isMobileMenuOpen && !isAuthPage()">
+  </div>
+
+  <!-- Sidebar -->
+  <app-sidebar 
+    *ngIf="!isAuthPage()"
+    [class.mobile-open]="isMobileMenuOpen"
+    [class.collapsed]="isSidebarCollapsed"
+    (sidebarToggle)="onSidebarToggle($event)"
+    (closeMobileMenu)="closeMobileMenu()">
+  </app-sidebar>
+
+  <!-- Main Content -->
+  <div class="main-content" [class.sidebar-collapsed]="isSidebarCollapsed && !isAuthPage()">
+    <!-- Header -->
+    <app-header 
+      *ngIf="!isAuthPage()"
+      (mobileMenuToggle)="toggleMobileMenu()">
+    </app-header>
+
+    <!-- Page Content -->
+    <main class="page-content" [class.auth-page]="isAuthPage()">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

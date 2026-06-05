@@ -1,0 +1,194 @@
+<div class="screen-grouping-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="page-title">
+            <i class="fas fa-layer-group me-2"></i>
+            {{ getTranslation('screenGrouping') || 'Screen Grouping' }}
+          </h2>
+          <button class="btn btn-success" (click)="openCreateGroupModal()">
+            <i class="fas fa-plus-circle me-2"></i>
+            {{ getTranslation('createGroup') || 'Create Group' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drag and Drop Area -->
+    <div class="row">
+      <!-- Available Screens -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-tv me-2"></i>
+              {{ getTranslation('availableScreens') || 'Available Screens' }}
+            </h5>
+          </div>
+          <div class="card-body screens-list" 
+               (dragover)="onDragOver($event)"
+               (drop)="onDrop($event, null)">
+            <div class="screen-item" 
+                 *ngFor="let screen of ungroupedScreens"
+                 [draggable]="true"
+                 (dragstart)="onDragStart($event, screen)"
+                 (dragend)="onDragEnd($event)">
+              <i class="fas fa-grip-vertical me-2"></i>
+              {{ screen.name }}
+            </div>
+            <div *ngIf="ungroupedScreens.length === 0" class="text-center text-muted py-3">
+              {{ getTranslation('noScreensAvailable') || 'No screens available' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Groups -->
+      <div class="col-md-8">
+        <div class="row g-3">
+          <div class="col-md-6" *ngFor="let group of groups">
+            <div class="card group-card">
+              <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center group-header">
+                  <h6 class="mb-0 group-name">{{ group.name }}</h6>
+                  <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-light edit-group-btn" (click)="openEditGroupModal(group)" title="{{ getTranslation('edit') || 'Edit' }}">
+                      <i class="fas fa-pen"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-group-btn" (click)="deleteGroup(group.id)" title="{{ getTranslation('delete') || 'Delete' }}">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body group-drop-zone"
+                   [attr.data-group-id]="group.id"
+                   (dragover)="onDragOver($event)"
+                   (drop)="onDrop($event, group.id)">
+                <div class="screen-item" 
+                     *ngFor="let screen of getScreensInGroup(group.id)"
+                     [draggable]="true"
+                     (dragstart)="onDragStart($event, screen)"
+                     (dragend)="onDragEnd($event)">
+                  <i class="fas fa-grip-vertical me-2"></i>
+                  {{ screen.name }}
+                  <button class="btn btn-sm btn-danger float-end" (click)="removeScreenFromGroup(screen.id, group.id)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div *ngIf="getScreensInGroup(group.id).length === 0" class="text-center text-muted py-3">
+                  {{ getTranslation('dragScreensHere') || 'Drag screens here' }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="groups.length === 0">
+            <div class="card">
+              <div class="card-body text-center py-5">
+                <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                <p class="text-muted">{{ getTranslation('noGroupsCreated') || 'No groups created yet' }}</p>
+                <button class="btn btn-primary" (click)="openCreateGroupModal()">
+                  <i class="fas fa-plus-circle me-2"></i>
+                  {{ getTranslation('createGroup') || 'Create Group' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div class="modal fade" [class.show]="showCreateGroupModal" [style.display]="showCreateGroupModal ? 'block' : 'none'" *ngIf="showCreateGroupModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-plus-circle me-2"></i>
+              {{ getTranslation('createGroup') || 'Create Group' }}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" (click)="showCreateGroupModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">{{ getTranslation('groupName') || 'Group Name' }} <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="newGroupName"
+                [placeholder]="getTranslation('enterGroupName') || 'Enter group name'"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ getTranslation('description') || 'Description' }}</label>
+              <textarea
+                class="form-control"
+                [(ngModel)]="newGroupDescription"
+                rows="3"
+                [placeholder]="getTranslation('enterDescription') || 'Enter description'"
+              ></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-success" (click)="createGroup()" [disabled]="!newGroupName.trim()">
+                <i class="fas fa-save me-2"></i>
+                {{ getTranslation('create') || 'Create' }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="showCreateGroupModal = false">
+                <i class="fas fa-times me-2"></i>
+                {{ getTranslation('cancel') || 'Cancel' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade" [class.show]="showCreateGroupModal" *ngIf="showCreateGroupModal"></div>
+
+    <!-- Edit Group Modal -->
+    <div class="modal fade" [class.show]="showEditGroupModal" [style.display]="showEditGroupModal ? 'block' : 'none'" *ngIf="showEditGroupModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-pen me-2"></i>
+              {{ getTranslation('editGroup') || 'Edit Group' }}
+            </h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeEditGroupModal()"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">{{ getTranslation('groupName') || 'Group Name' }} <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="editingGroupName"
+                [placeholder]="getTranslation('enterGroupName') || 'Enter group name'"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ getTranslation('description') || 'Description' }}</label>
+              <textarea
+                class="form-control"
+                [(ngModel)]="editingGroupDescription"
+                rows="3"
+                [placeholder]="getTranslation('enterDescription') || 'Enter description'"
+              ></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-primary" (click)="saveEditGroup()" [disabled]="!editingGroupName.trim()">
+                <i class="fas fa-save me-2"></i>
+                {{ getTranslation('save') || 'Save' }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="closeEditGroupModal()">
+                {{ getTranslation('cancel') || 'Cancel' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade" [class.show]="showEditGroupModal" *ngIf="showEditGroupModal" (click)="closeEditGroupModal()"></div>
+  </div>
+</div>

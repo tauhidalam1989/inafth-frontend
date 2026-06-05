@@ -1,0 +1,451 @@
+<div class="notifications-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-bell"></i>
+        {{ getTranslation('notifications') }}
+      </h1>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="markAllAsRead()">
+          <i class="fas fa-check-double"></i>
+          {{ getTranslation('markAllAsRead') }}
+        </button>
+        <button class="btn btn-primary" (click)="showAddForm = !showAddForm">
+          <i class="fas fa-plus"></i>
+          {{ getTranslation('addNewNotification') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Notification Form -->
+  <div class="add-notification-form" *ngIf="showAddForm">
+    <div class="form-card">
+      <h3 class="form-title">{{ editingNotification ? getTranslation('editNotification') || 'Edit Notification' : getTranslation('addNewNotification') }}</h3>
+      
+      <!-- Three Connected Selection Cards -->
+      <div class="selection-cards">
+        <div class="selection-card" #subsiteCard>
+          <label class="card-label">{{ getTranslation('subsites') }}</label>
+          <div class="card-content" [class.selected]="selectedSubsite" (click)="openSubsiteSelector(); $event.stopPropagation()">
+            {{ selectedSubsite ? selectedSubsite.name : getTranslation('nothingSelected') }}
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="openSubsiteSelector(); $event.stopPropagation()">
+            <i class="fas fa-chevron-down" [class.rotated]="showSubsiteDropdown"></i>
+          </button>
+          <div class="dropdown-menu" *ngIf="showSubsiteDropdown" (click)="$event.stopPropagation()">
+            <div class="dropdown-item" *ngFor="let subsite of availableSubsites" (click)="onSubsiteSelected(subsite); $event.stopPropagation()">
+              {{ subsite.name }}
+            </div>
+            <div class="dropdown-item" *ngIf="availableSubsites.length === 0">
+              {{ getTranslation('noSubsitesAvailable') || 'No subsites available' }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="selection-card">
+          <label class="card-label">{{ getTranslation('sections') }}</label>
+          <div class="card-content" [class.selected]="selectedSection" (click)="openSectionSelector()">
+            {{ selectedSection ? selectedSection.name : '------' }}
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="openSectionSelector(); $event.stopPropagation()" [disabled]="!selectedSubsite">
+            <i class="fas fa-chevron-down" [class.rotated]="showSectionDropdown"></i>
+          </button>
+          <div class="dropdown-menu" *ngIf="showSectionDropdown" (click)="$event.stopPropagation()">
+            <div class="dropdown-item" *ngFor="let section of availableSections" (click)="onSectionSelected(section)">
+              {{ section.name }}
+            </div>
+            <div class="dropdown-item" *ngIf="availableSections.length === 0">
+              {{ getTranslation('noSectionsAvailable') || 'No sections available' }}
+            </div>
+          </div>
+        </div>
+        
+        <div class="selection-card">
+          <label class="card-label">{{ getTranslation('specialDivisions') }}</label>
+          <div class="card-content" [class.selected]="selectedSpecialDivision" (click)="openSpecialDivisionSelector()">
+            {{ selectedSpecialDivision ? selectedSpecialDivision.name : '------' }}
+          </div>
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="openSpecialDivisionSelector(); $event.stopPropagation()" [disabled]="!selectedSection">
+            <i class="fas fa-chevron-down" [class.rotated]="showSpecialDivisionDropdown"></i>
+          </button>
+          <div class="dropdown-menu" *ngIf="showSpecialDivisionDropdown" (click)="$event.stopPropagation()">
+            <div class="dropdown-item" *ngFor="let division of availableSpecialDivisions" (click)="onSpecialDivisionSelected(division)">
+              {{ division.name }}
+            </div>
+            <div class="dropdown-item" *ngIf="availableSpecialDivisions.length === 0">
+              {{ getTranslation('noSpecialDivisionsAvailable') || 'No special divisions available' }}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <form [formGroup]="notificationForm" (ngSubmit)="addNotification()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="title">{{ getTranslation('notificationTitle') }} *</label>
+            <input 
+              type="text" 
+              id="title" 
+              formControlName="title" 
+              class="form-control"
+              [placeholder]="getTranslation('enterNotificationTitle')">
+          </div>
+          <div class="form-group">
+            <label for="type">{{ getTranslation('notificationType') }} *</label>
+            <select id="type" formControlName="type" class="form-control">
+              <option value="normal">{{ getTranslation('normal') }}</option>
+              <option value="urgent">{{ getTranslation('urgent') }}</option>
+              <option value="important">{{ getTranslation('important') }}</option>
+              <option value="info">{{ getTranslation('info') }}</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="schedulingDate">{{ getTranslation('schedulingDate') }}</label>
+            <input 
+              type="date" 
+              id="schedulingDate" 
+              formControlName="schedulingDate" 
+              class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="schedulingTime">{{ getTranslation('schedulingTime') }}</label>
+            <input 
+              type="time" 
+              id="schedulingTime" 
+              formControlName="schedulingTime" 
+              class="form-control">
+          </div>
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                formControlName="sendToAll" 
+                class="form-check-input"
+                (change)="onSendToAllChange()">
+              <span class="checkbox-text">{{ getTranslation('sendToAll') }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="message">{{ getTranslation('notificationMessage') }} *</label>
+            <textarea 
+              id="message" 
+              formControlName="message" 
+              class="form-control"
+              rows="3"
+              [placeholder]="getTranslation('enterNotificationMessage')"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="category">{{ getTranslation('category') }} *</label>
+            <select id="category" formControlName="category" class="form-control">
+              <option value="system-updates">{{ getTranslation('systemUpdates') }}</option>
+              <option value="security-alerts">{{ getTranslation('securityAlerts') }}</option>
+              <option value="new-messages">{{ getTranslation('newMessages') }}</option>
+              <option value="reminders">{{ getTranslation('reminders') }}</option>
+              <option value="marketing">{{ getTranslation('marketing') }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="priority">{{ getTranslation('priority') }} *</label>
+            <select id="priority" formControlName="priority" class="form-control">
+              <option value="low">{{ getTranslation('low') }}</option>
+              <option value="medium">{{ getTranslation('medium') }}</option>
+              <option value="high">{{ getTranslation('high') }}</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Rich Text Editor Area -->
+        <div class="rich-text-editor-section">
+          <label class="form-label">{{ getTranslation('notificationContent') }}</label>
+          <div class="rich-text-editor">
+            <div class="editor-toolbar">
+              <button type="button" class="toolbar-btn" title="Magic">
+                <i class="fas fa-magic"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Bold">
+                <strong>B</strong>
+              </button>
+              <button type="button" class="toolbar-btn" title="Italic">
+                <em>I</em>
+              </button>
+              <button type="button" class="toolbar-btn" title="Underline">
+                <u>U</u>
+              </button>
+              <button type="button" class="toolbar-btn" title="Attachment">
+                <i class="fas fa-paperclip"></i>
+              </button>
+              <select class="toolbar-select">
+                <option>Helvetica Neue</option>
+              </select>
+              <select class="toolbar-select">
+                <option>14</option>
+              </select>
+              <button type="button" class="toolbar-btn" title="Text Color">
+                <span style="color: #ffc107;">A</span>
+              </button>
+              <button type="button" class="toolbar-btn" title="Left Align">
+                <i class="fas fa-align-left"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Center Align">
+                <i class="fas fa-align-center"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Right Align">
+                <i class="fas fa-align-right"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Justify">
+                <i class="fas fa-align-justify"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Bullet List">
+                <i class="fas fa-list-ul"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Numbered List">
+                <i class="fas fa-list-ol"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Text Style">
+                <i class="fas fa-text-height"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Table">
+                <i class="fas fa-table"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Link">
+                <i class="fas fa-link"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Image">
+                <i class="fas fa-image"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Video">
+                <i class="fas fa-video"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Clear Formatting">
+                <i class="fas fa-times"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Source Code">
+                <i class="fas fa-code"></i>
+              </button>
+              <button type="button" class="toolbar-btn" title="Help">
+                <i class="fas fa-question"></i>
+              </button>
+            </div>
+            <div class="editor-content" contenteditable="true">
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="resetForm()">
+            {{ getTranslation('cancel') }}
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!notificationForm.valid || isLoading">
+            <span *ngIf="isLoading">{{ getTranslation('saving') || 'Saving...' }}</span>
+            <span *ngIf="!isLoading">{{ editingNotification ? getTranslation('saveChanges') : getTranslation('addNotification') }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="search-filter">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (input)="filterNotifications()"
+            [placeholder]="getTranslation('searchNotifications')"
+            class="form-control">
+        </div>
+      </div>
+      <div class="type-filter">
+        <select [(ngModel)]="selectedType" (change)="filterNotifications()" class="form-control">
+          <option value="all">{{ getTranslation('allTypes') }}</option>
+          <option value="normal">{{ getTranslation('normal') }}</option>
+          <option value="urgent">{{ getTranslation('urgent') }}</option>
+          <option value="important">{{ getTranslation('important') }}</option>
+          <option value="info">{{ getTranslation('info') }}</option>
+        </select>
+      </div>
+      <div class="status-filter">
+        <select [(ngModel)]="selectedStatus" (change)="filterNotifications()" class="form-control">
+          <option value="all">{{ getTranslation('allStatuses') }}</option>
+          <option value="draft">{{ getTranslation('draft') }}</option>
+          <option value="scheduled">{{ getTranslation('scheduled') }}</option>
+          <option value="sent">{{ getTranslation('sent') }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications List -->
+  <div class="notifications-list">
+    <div class="list-header">
+      <span class="total-count">{{ getTranslation('totalNotifications') }}: {{ filteredNotifications.length }}</span>
+      <span class="unread-count">{{ getTranslation('draft') }}: {{ getUnreadCount() }}</span>
+    </div>
+
+    <div class="table-container">
+      <table class="notifications-table">
+        <thead>
+          <tr>
+            <th>{{ getTranslation('notificationTitle') }}</th>
+            <th>{{ getTranslation('notificationType') }}</th>
+            <th>{{ getTranslation('location') }}</th>
+            <th>{{ getTranslation('status') }}</th>
+            <th>{{ getTranslation('priority') }}</th>
+            <th>{{ getTranslation('date') }}</th>
+            <th>{{ getTranslation('actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let notification of filteredNotifications" [class]="notification.status">
+            <td class="title-cell">
+              <div class="notification-title">
+                <strong>{{ notification.title }}</strong>
+                <div class="notification-message" *ngIf="notification.message">
+                  <small class="text-muted">{{ notification.message }}</small>
+                </div>
+              </div>
+            </td>
+            <td class="type-cell">
+              <div class="notification-type" [class]="notification.type">
+                <i class="fas" [class]="getTypeIcon(notification.type)"></i>
+                <span class="type-badge">{{ getTypeDisplayName(notification.type) }}</span>
+              </div>
+            </td>
+            <td class="location-cell">
+              <div class="location-info">
+                <div *ngIf="notification.sendToAll" class="location-item all-locations">
+                  <i class="fas fa-globe"></i>
+                  <span>{{ getTranslation('allLocations') || 'All Locations' }}</span>
+                </div>
+                <div *ngIf="!notification.sendToAll" class="location-path">
+                  <span *ngIf="notification.subsiteName">{{ notification.subsiteName }}</span>
+                  <span *ngIf="notification.subsiteName && notification.sectionName"> / </span>
+                  <span *ngIf="notification.sectionName">{{ notification.sectionName }}</span>
+                  <span *ngIf="(notification.subsiteName || notification.sectionName) && notification.specialDivisionName"> / </span>
+                  <span *ngIf="notification.specialDivisionName">{{ notification.specialDivisionName }}</span>
+                  <span *ngIf="!notification.subsiteName && !notification.sectionName && !notification.specialDivisionName" class="text-muted">-</span>
+                </div>
+              </div>
+            </td>
+            <td class="status-cell">
+              <span class="status-badge" [class]="notification.status">
+                {{ getStatusDisplayName(notification.status) }}
+              </span>
+            </td>
+            <td class="priority-cell">
+              <span class="priority-badge" [class]="notification.priority">
+                {{ getPriorityDisplayName(notification.priority) }}
+              </span>
+            </td>
+            <td class="date-cell">
+              <div class="date-info">
+                <div class="created-date" *ngIf="notification.createdAt">
+                  <i class="fas fa-calendar"></i>
+                  <span>{{ notification.createdAt | date:'short' }}</span>
+                </div>
+                <div class="scheduled-date" *ngIf="notification.scheduledDate">
+                  <i class="fas fa-clock"></i>
+                  <span>
+                    {{ notification.scheduledDate | date:'shortDate' }}
+                    <span *ngIf="notification.scheduledTime"> {{ notification.scheduledTime }}</span>
+                  </span>
+                </div>
+                <div *ngIf="!notification.createdAt && !notification.scheduledDate" class="text-muted">-</div>
+              </div>
+            </td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button 
+                  class="btn btn-sm btn-outline-primary" 
+                  (click)="editNotification(notification)" 
+                  [title]="getTranslation('edit')"
+                  *ngIf="notification.status === 'draft'">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                  class="btn btn-sm btn-outline-success" 
+                  (click)="sendNotification(notification)" 
+                  [title]="getTranslation('send')"
+                  *ngIf="notification.status === 'draft' || notification.status === 'scheduled'">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+                <button 
+                  class="btn btn-sm btn-outline-info" 
+                  (click)="duplicateNotification(notification)" 
+                  [title]="getTranslation('duplicate')">
+                  <i class="fas fa-copy"></i>
+                </button>
+                <button 
+                  class="btn btn-sm btn-outline-danger" 
+                  (click)="deleteNotification(notification)" 
+                  [title]="getTranslation('delete')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="totalNotifications > 0">
+      <div class="pagination">
+        <button class="btn btn-sm btn-outline-secondary" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
+          {{ getTranslation('previous') }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="onPageChange(1)" [disabled]="currentPage === 1">
+          {{ getTranslation('first') }}
+        </button>
+        <button class="btn btn-sm btn-primary" [disabled]="true">
+          {{ currentPage.toString().padStart(2, '0') }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage >= totalPages">
+          {{ (currentPage + 1).toString().padStart(2, '0') }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage >= totalPages">
+          {{ getTranslation('next') }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="onPageChange(totalPages)" [disabled]="currentPage >= totalPages">
+          {{ getTranslation('last') }}
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && filteredNotifications.length === 0">
+      <i class="fas fa-bell"></i>
+      <p>{{ getTranslation('noNotificationsFound') }}</p>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>{{ getTranslation('loading') }}</p>
+    </div>
+
+    <div class="error-message" *ngIf="errorMessage">
+      <div class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Dialog -->
+  <app-confirm-dialog
+    [visible]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="onCancelDelete()">
+  </app-confirm-dialog>
+</div>

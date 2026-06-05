@@ -1,0 +1,91 @@
+<aside class="sidebar" 
+       [class.collapsed]="isCollapsed" 
+       [class.rtl]="currentLanguage === 'ar'"
+       [class.ltr]="currentLanguage === 'en'"
+       [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'"
+       [style.left]="currentLanguage === 'en' ? '0' : 'auto'"
+       [style.right]="currentLanguage === 'ar' ? '0' : 'auto'"
+       [style.borderLeft]="currentLanguage === 'ar' ? '3px solid #ff6b6b' : 'none'"
+       [style.borderRight]="currentLanguage === 'en' ? '3px solid #4ecdc4' : 'none'">
+  <div class="sidebar-header">
+    <button class="toggle-btn" (click)="toggleSidebar($event)" [title]="isCollapsed ? getTranslation('expandSidebar') : getTranslation('collapseSidebar') + ' (Ctrl+B)'" type="button">
+      <i class="fas" [class]="isCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
+    </button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <ul class="nav-menu">
+      <li class="nav-item" *ngFor="let menuItem of menuItems" [class.active]="isMenuActive(menuItem)" [class.has-active-child]="hasActiveChild(menuItem)">
+        
+        <!-- Menu Item with Children (Expandable) -->
+        <div class="nav-link" 
+             *ngIf="menuItem.children && menuItem.children.length > 0"
+             (click)="toggleMenu(menuItem)"
+             [class.expanded]="menuItem.isExpanded"
+             [class.has-children]="true">
+          <i [class]="menuItem.icon" class="nav-icon"></i>
+          <span class="nav-text" *ngIf="!isCollapsed">{{ menuItem.label }}</span>
+          <div class="nav-arrow" *ngIf="!isCollapsed">
+            <i class="fas fa-chevron-down" [class.rotated]="menuItem.isExpanded"></i>
+          </div>
+        </div>
+
+        <!-- Menu Item without Children (Direct Link) -->
+        <a class="nav-link" 
+           *ngIf="!menuItem.children || menuItem.children.length === 0"
+           [routerLink]="menuItem.route"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: true}">
+          <i [class]="menuItem.icon" class="nav-icon"></i>
+          <span class="nav-text" *ngIf="!isCollapsed">{{ menuItem.label }}</span>
+          <span class="nav-badge" *ngIf="menuItem.badge && !isCollapsed" [class]="menuItem.badgeClass">
+            {{ menuItem.badge }}
+          </span>
+        </a>
+
+        <!-- Submenu -->
+        <ul class="submenu" *ngIf="menuItem.children && menuItem.children.length > 0" [class.expanded]="menuItem.isExpanded">
+          <li class="submenu-item" *ngFor="let subItem of menuItem.children" [class.active]="isMenuActive(subItem)">
+            <a class="submenu-link" 
+               [routerLink]="subItem.route"
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{exact: true}">
+              <i [class]="subItem.icon" class="submenu-icon"></i>
+              <span class="submenu-text" *ngIf="!isCollapsed">{{ subItem.label }}</span>
+              <span class="submenu-badge" *ngIf="subItem.badge && !isCollapsed" [class]="subItem.badgeClass">
+                {{ subItem.badge }}
+              </span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">
+        <i class="fas fa-user"></i>
+      </div>
+      <div class="user-details">
+        <span class="user-name">{{ getUserDisplayName() }}</span>
+        <span class="user-role">{{ getUserRole() }}</span>
+        <span class="user-email" *ngIf="currentUser && currentUser.email">{{ currentUser.email }}</span>
+      </div>
+    </div>
+    <div class="logout-section">
+      <button class="btn btn-outline-light btn-sm w-100" (click)="logout()" [title]="getTranslation('logout')">
+        <i class="fas fa-sign-out-alt me-2"></i>
+        {{ getTranslation('logout') }}
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- Logout Confirmation Dialog -->
+<app-confirm-dialog
+  [visible]="showLogoutConfirm"
+  [data]="logoutConfirmData"
+  (confirmed)="onLogoutConfirmed()"
+  (cancelled)="onLogoutCancelled()">
+</app-confirm-dialog>

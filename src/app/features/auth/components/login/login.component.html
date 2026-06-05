@@ -1,0 +1,165 @@
+<div class="login-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <div class="login-background">
+    <div class="login-overlay"></div>
+  </div>
+  
+  <div class="login-content">
+    <div class="login-card">
+      <!-- Language Toggle -->
+      <div class="language-toggle">
+        <button 
+          class="lang-btn" 
+          [class.active]="currentLanguage === 'ar'"
+          (click)="toggleLanguage()">
+          العربية
+        </button>
+        <button 
+          class="lang-btn" 
+          [class.active]="currentLanguage === 'en'"
+          (click)="toggleLanguage()">
+          English
+        </button>
+      </div>
+
+      <!-- Logo Section -->
+      <div class="logo-section">
+        <div class="logo-container">
+          <img src="../../../../../assets/logo/screen.jpeg" alt="Logo" class="logo">
+        </div>
+        <!-- <h1 class="app-title">{{ getTranslation('appTitle') }}</h1>
+        <p class="app-subtitle">{{ getTranslation('appSubtitle') }}</p> -->
+      </div>
+
+      <!-- Login Form: email + password verify → 2FA -->
+      <div class="form-section">
+        <h2 class="form-title">{{ getTranslation('loginTitle') }}</h2>
+        <p class="form-subtitle">{{ getTranslation('loginSubtitle') }}</p>
+
+        <!-- Step 1: Email + Password (shown when not in 2FA step) -->
+        <div class="login-form" *ngIf="!isTwoFactorStep">
+          <div class="form-group">
+            <label for="googleEmail" class="form-label">
+              <i class="fas fa-envelope"></i>
+              {{ getTranslation('email') || 'Email' }}
+            </label>
+            <input
+              id="googleEmail"
+              class="form-control"
+              type="email"
+              [(ngModel)]="googleEmail"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="getTranslation('enterEmail') || 'Enter your email'"
+              autocomplete="email"
+              name="googleEmail">
+          </div>
+
+          <div class="form-group">
+            <label for="googlePassword" class="form-label">
+              <i class="fas fa-lock"></i>
+              {{ getTranslation('password') }}
+            </label>
+            <div class="password-input">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="googlePassword"
+                class="form-control"
+                [(ngModel)]="googlePassword"
+                [ngModelOptions]="{ standalone: true }"
+                [placeholder]="getTranslation('enterPassword')"
+                autocomplete="current-password"
+                name="googlePassword">
+              <button type="button" class="password-toggle" (click)="togglePasswordVisibility()">
+                <i class="fas" [class]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="error-alert" *ngIf="errorMessage">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ errorMessage }}
+          </div>
+
+          <button
+            type="button"
+            class="login-btn"
+            (click)="submitEmailPasswordLogin()"
+            [disabled]="isLoading || !(googleEmail || '').trim() || !googlePassword">
+            <span *ngIf="!isLoading">
+              {{ getTranslation('loginButton') || 'Login' }}
+            </span>
+            <span *ngIf="isLoading">
+              <i class="fas fa-spinner fa-spin"></i>
+              {{ getTranslation('loading') }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Step 2: 2FA Authenticator (shown after email+password verified) -->
+        <div class="login-form" *ngIf="isTwoFactorStep">
+          <div class="twofa-setup-qr" *ngIf="twoFactorFlow === 'verify-setup' && twoFactorSetupQrDataUrl">
+            <div class="twofa-setup-qr-title">
+              <i class="fas fa-qrcode"></i>
+              <span>{{ getTranslation('scanQrWithAuthenticator') || 'Scan this QR with Authenticator' }}</span>
+            </div>
+            <img class="twofa-setup-qr-img" [src]="twoFactorSetupQrDataUrl" alt="2FA QR Code">
+          </div>
+
+          <div class="form-group">
+            <label for="twoFactorCode" class="form-label">
+              <i class="fas fa-shield-alt"></i>
+              <span>
+                {{ twoFactorFlow === 'verify-setup'
+                  ? (getTranslation('twoFactorSetupCodeLabel') || '6-digit code (to enable 2FA)')
+                  : (getTranslation('verificationCode') || 'Verification Code') }}
+              </span>
+            </label>
+            <input
+              type="text"
+              id="twoFactorCode"
+              class="form-control"
+              maxlength="6"
+              inputmode="numeric"
+              [(ngModel)]="twoFactorCode"
+              [ngModelOptions]="{ standalone: true }"
+              name="twoFactorCode"
+              autocomplete="one-time-code">
+            <div class="error-message" *ngIf="twoFactorError">
+              {{ twoFactorError }}
+            </div>
+          </div>
+
+          <div class="error-alert" *ngIf="errorMessage && isTwoFactorStep">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ errorMessage }}
+          </div>
+
+          <div class="twofa-actions">
+            <button type="button" class="login-btn btn-back" (click)="goBackToEmailPassword()" [disabled]="isLoading">
+              <i class="fas fa-arrow-left twofa-back-arrow" aria-hidden="true"></i>
+              {{ getTranslation('back') || 'Back' }}
+            </button>
+            <button
+              type="button"
+              class="login-btn"
+              (click)="onSubmit2FA()"
+              [disabled]="isLoading || !twoFactorCode">
+              <span *ngIf="!isLoading">
+                {{ twoFactorFlow === 'verify-setup'
+                  ? (getTranslation('verifyAndEnable2fa') || 'Verify & Enable 2FA')
+                  : (getTranslation('verifyButton') || 'Verify') }}
+              </span>
+              <span *ngIf="isLoading">
+                <i class="fas fa-spinner fa-spin"></i> {{ getTranslation('loading') }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <!-- <div class="login-footer">
+        <p>{{ getTranslation('copyright') }}</p>
+      </div> -->
+    </div>
+  </div>
+</div>

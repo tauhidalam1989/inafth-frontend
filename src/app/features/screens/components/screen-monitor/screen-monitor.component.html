@@ -1,0 +1,277 @@
+<div class="screen-monitor-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+
+
+  <div class="monitor-content">
+    <!-- Left Sidebar - Screens List -->
+    <div class="screens-sidebar">
+      <div class="sidebar-header">
+        <h3>
+          <i class="fas fa-list me-2"></i>
+          {{ getTranslation('screens') || 'Screens' }}
+          <span class="badge bg-primary ms-2">{{ screens.length }}</span>
+        </h3>
+      </div>
+      <div class="screens-list">
+        <div *ngIf="isLoading" class="text-center py-4">
+          <div class="spinner-border spinner-border-sm" role="status"></div>
+          <p class="mt-2">{{ getTranslation('loading') || 'Loading...' }}</p>
+        </div>
+        <div *ngIf="!isLoading && screens.length === 0" class="text-center py-4 text-muted">
+          <i class="fas fa-tv fa-2x mb-2"></i>
+          <p>{{ getTranslation('noScreensFound') || 'No screens found' }}</p>
+        </div>
+        <div 
+          *ngFor="let screen of screens" 
+          class="screen-item"
+          [class.active]="selectedScreen?.id === screen.id"
+          (click)="selectScreen(screen)">
+          <div class="screen-item-header">
+            <h5 class="screen-name">{{ screen.name }}</h5>
+            <span class="status-badge" [ngClass]="getScreenStatusClass(screen.status)">
+              {{ getScreenStatusText(screen.status) }}
+            </span>
+          </div>
+          <div class="screen-item-info">
+            <div class="info-row" *ngIf="screen.ipAddress">
+              <i class="fas fa-network-wired me-1"></i>
+              <span>{{ screen.ipAddress }}</span>
+            </div>
+            <div class="info-row" *ngIf="screen.location">
+              <i class="fas fa-map-marker-alt me-1"></i>
+              <span>{{ screen.location }}</span>
+            </div>
+            <div class="info-row" *ngIf="screen.groupName">
+              <i class="fas fa-layer-group me-1"></i>
+              <span>{{ screen.groupName }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel - Selected Screen Info and Controls -->
+    <div class="screen-details-panel">
+      <div *ngIf="!selectedScreen" class="no-selection">
+        <div class="no-selection-content">
+          <i class="fas fa-mouse-pointer fa-3x mb-3"></i>
+          <h3>{{ getTranslation('selectScreenToMonitor') || 'Select a Screen' }}</h3>
+          <p class="text-muted">{{ getTranslation('selectScreenFromLeft') || 'Select a screen from the left panel to view its status and control playback' }}</p>
+        </div>
+      </div>
+
+      <div *ngIf="selectedScreen" class="selected-screen-details">
+        <!-- Screen Info Header -->
+        
+
+        <!-- Currently Playing Section -->
+    
+
+        <!-- Screen Divisions & Advertisements -->
+        <div class="card mt-4" *ngIf="screenRegions.length > 0">
+      
+          <div class="card-body">
+            <div *ngIf="isLoadingRegions || isLoadingSchedules" class="text-center py-3">
+              <div class="spinner-border spinner-border-sm" role="status"></div>
+              <p class="mt-2 small text-muted">{{ getTranslation('loading') || 'Loading...' }}</p>
+            </div>
+            <div *ngIf="!isLoadingRegions && !isLoadingSchedules">
+              <!-- Visual Screen Preview -->
+              <div class="screen-preview-container mb-4">
+                <h6 class="mb-3">
+                  <i class="fas fa-desktop me-2"></i>
+                  {{ getTranslation('screenPreview') || 'Screen Preview' }}
+                </h6>
+                <div class="screen-preview" [style.aspect-ratio]="'16/9'">
+                  <div 
+                    *ngFor="let region of screenRegions" 
+                    class="preview-region"
+                    [style.left.%]="region.xPosition"
+                    [style.top.%]="region.yPosition"
+                    [style.width.%]="region.widthPercentage"
+                    [style.height.%]="region.heightPercentage"
+                    [class.has-advertisement]="getAdvertisementForRegion(region.id)"
+                    [class.playing]="getAdvertisementForRegion(region.id) && getScheduleStatus(getAdvertisementForRegion(region.id)!.schedule) === 'active'">
+                    <!-- Live content preview (video frame / image) -->
+                    <ng-container *ngIf="getAdvertisementForRegion(region.id) as regionAd">
+                      <!-- Video preview -->
+                      <video
+                        *ngIf="regionAd.advertisement.type === 'video' 
+                               && (isScheduleActive(regionAd.schedule) || (selectedScreen && selectedScreen.status === 'playing'))
+                               && selectedScreen && selectedScreen.status === 'playing'"
+                        class="region-live-preview"
+                        [src]="regionAd.advertisement.fileUrl"
+                        muted
+                        [muted]="true"
+                        autoplay
+                        loop
+                        playsinline>
+                      </video>
+                      <!-- Image preview (schedule or assigned-only; show when playing) -->
+                      <img
+                        *ngIf="regionAd.advertisement.type === 'image'
+                               && (isScheduleActive(regionAd.schedule) || (selectedScreen && selectedScreen.status === 'playing'))
+                               && selectedScreen && selectedScreen.status === 'playing'"
+                        class="region-live-preview"
+                        [src]="regionAd.advertisement.fileUrl"
+                        alt="Advertisement preview" />
+                    </ng-container>
+                    <div class="region-label">
+                      <span class="region-number">{{ getRegionName(region) }}</span>
+                      <span class="region-badge" *ngIf="getAdvertisementForRegion(region.id)">
+                        <i class="fas" 
+                           [class.fa-image]="getAdvertisementForRegion(region.id)!.advertisement.type === 'image'"
+                           [class.fa-video]="getAdvertisementForRegion(region.id)!.advertisement.type === 'video'"
+                           [class.fa-file-powerpoint]="getAdvertisementForRegion(region.id)!.advertisement.type === 'presentation'"
+                           [class.fa-file]="getAdvertisementForRegion(region.id)!.advertisement.type === 'document'">
+                        </i>
+                      </span>
+                    </div>
+                    <div class="region-info-overlay" *ngIf="getAdvertisementForRegion(region.id)">
+                      <div class="ad-title-small">{{ getAdvertisementForRegion(region.id)!.advertisement.title }}</div>
+                      <span class="status-badge-small" 
+                            *ngIf="getAdvertisementForRegion(region.id)?.schedule"
+                            [ngClass]="{
+                              'bg-success': getScheduleStatus(getAdvertisementForRegion(region.id)!.schedule) === 'active',
+                              'bg-warning': getScheduleStatus(getAdvertisementForRegion(region.id)!.schedule) === 'upcoming',
+                              'bg-secondary': getScheduleStatus(getAdvertisementForRegion(region.id)!.schedule) === 'ended'
+                            }">
+                        {{ getScheduleStatus(getAdvertisementForRegion(region.id)!.schedule) === 'active' ? (getTranslation('playing') || 'Playing') : 
+                           getScheduleStatus(getAdvertisementForRegion(region.id)!.schedule) === 'upcoming' ? (getTranslation('upcoming') || 'Upcoming') : 
+                           (getTranslation('ended') || 'Ended') }}
+                      </span>
+                    </div>
+                    
+                    <!-- Region Controls in Preview -->
+                    <div class="region-preview-controls">
+                      <button 
+                        *ngIf="getAdvertisementForRegion(region.id)"
+                        class="btn btn-xs btn-success"
+                        (click)="playVideoInRegion(region.id); $event.stopPropagation()"
+                        [disabled]="isLoading"
+                        title="{{ getTranslation('play') || 'Play' }}">
+                        <i class="fas fa-play"></i>
+                      </button>
+                      <button 
+                        *ngIf="getAdvertisementForRegion(region.id)"
+                        class="btn btn-xs btn-dark"
+                        (click)="playVideoInRegion(region.id, true); $event.stopPropagation()"
+                        [disabled]="isLoading"
+                        title="{{ getTranslation('muteAudio') || 'Play muted' }}">
+                        <i class="fas fa-volume-mute"></i>
+                      </button>
+                      <button 
+                        class="btn btn-xs btn-danger"
+                        (click)="stopVideoInRegion(region.id); $event.stopPropagation()"
+                        [disabled]="isLoading"
+                        title="{{ getTranslation('stop') || 'Stop' }}">
+                        <i class="fas fa-stop"></i>
+                      </button>
+                      <button 
+                        class="btn btn-xs btn-warning"
+                        (click)="pauseVideoInRegion(region.id); $event.stopPropagation()"
+                        [disabled]="isLoading"
+                        title="{{ getTranslation('pause') || 'Pause' }}">
+                        <i class="fas fa-pause"></i>
+                      </button>
+                      <button 
+                        class="btn btn-xs btn-info"
+                        (click)="resumeVideoInRegion(region.id); $event.stopPropagation()"
+                        [disabled]="isLoading"
+                        title="{{ getTranslation('resume') || 'Resume' }}">
+                        <i class="fas fa-play-circle"></i>
+                      </button>
+                      <button 
+                        class="btn btn-xs btn-primary"
+                        (click)="setFullscreenInRegion(region.id, true); $event.stopPropagation()"
+                        [disabled]="isLoading"
+                        title="{{ getTranslation('fullscreen') || 'Full Screen' }}">
+                        <i class="fas fa-expand"></i>
+                      </button>
+                      <button 
+                        class="btn btn-xs btn-secondary"
+                        (click)="setFullscreenInRegion(region.id, false); $event.stopPropagation()"
+                        [disabled]="isLoading"
+                        title="{{ getTranslation('exitFullscreen') || 'Exit Full Screen' }}">
+                        <i class="fas fa-compress"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Regions List -->
+          
+          </div>
+        </div>
+
+        <!-- Screen Details -->
+        <div class="card mt-4">
+          <div class="card-header">
+            <h4 class="mb-0">
+              <i class="fas fa-info-circle me-2"></i>
+              {{ getTranslation('screenDetails') || 'Screen Details' }}
+            </h4>
+          </div>
+          <div class="card-body">
+            <div class="details-grid">
+              <div class="detail-item">
+                <strong>{{ getTranslation('ipAddress') || 'IP Address' }}:</strong>
+                <span>{{ selectedScreen.ipAddress || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <strong>{{ getTranslation('macAddress') || 'MAC Address' }}:</strong>
+                <span>{{ selectedScreen.macAddress || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <strong>{{ getTranslation('location') || 'Location' }}:</strong>
+                <span>{{ selectedScreen.location || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <strong>{{ getTranslation('group') || 'Group' }}:</strong>
+                <span>{{ selectedScreen.groupName || 'N/A' }}</span>
+              </div>
+              <div class="detail-item">
+                <strong>{{ getTranslation('lastConnected') || 'Last Connected' }}:</strong>
+                <span>{{ selectedScreen.lastConnected | date:'short' }}</span>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button type="button" class="btn btn-outline-primary btn-sm"
+                      (click)="refreshPlayer()"
+                      [disabled]="isRefreshingPlayer"
+                      [title]="getTranslation('refreshPlayer') || 'Refresh player page (index.html)'">
+                <span *ngIf="isRefreshingPlayer" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                <i class="fas fa-sync-alt me-1"></i>
+                {{ getTranslation('refreshPlayer') || 'Refresh player' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Banner -->
+  <div *ngIf="showMessage" class="message-banner" [ngClass]="'message-' + messageType">
+    <div class="message-content">
+      <i class="fas" 
+         [class.fa-check-circle]="messageType === 'success'"
+         [class.fa-exclamation-circle]="messageType === 'error'"
+         [class.fa-exclamation-triangle]="messageType === 'warning'"
+         [class.fa-info-circle]="messageType === 'info'">
+      </i>
+      <span>{{ message }}</span>
+    </div>
+    <button class="message-close" (click)="showMessage = false">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Confirm Dialog -->
+  <app-confirm-dialog
+    [data]="confirmDialogData"
+    [visible]="showConfirmDialog"
+    (confirmed)="onConfirmDialogConfirmed()"
+    (cancelled)="onConfirmDialogCancelled()">
+  </app-confirm-dialog>
+</div>

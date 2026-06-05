@@ -1,0 +1,179 @@
+<div class="advertising-banner-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-list"></i>
+        {{ getTranslation('advertisingBanner') }}
+      </h1>
+      <button class="btn btn-primary" (click)="showAddForm = !showAddForm">
+        <i class="fas fa-plus"></i>
+        {{ getTranslation('addNewBanner') }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Add Banner Form -->
+  <div class="add-banner-form" *ngIf="showAddForm">
+    <div class="form-card">
+      <h3 class="form-title">{{ getTranslation('addNewBanner') }}</h3>
+      <form [formGroup]="bannerForm" (ngSubmit)="addBanner()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="title">{{ getTranslation('bannerTitle') }} *</label>
+            <input 
+              type="text" 
+              id="title" 
+              formControlName="title" 
+              class="form-control"
+              [placeholder]="getTranslation('enterBannerTitle')">
+          </div>
+          <div class="form-group">
+            <label for="description">{{ getTranslation('bannerDescription') }} *</label>
+            <textarea 
+              id="description" 
+              formControlName="description" 
+              class="form-control"
+              rows="3"
+              [placeholder]="getTranslation('enterBannerDescription')"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="imageUrl">{{ getTranslation('imageUrl') }} *</label>
+            <input 
+              type="url" 
+              id="imageUrl" 
+              formControlName="imageUrl" 
+              class="form-control"
+              [placeholder]="getTranslation('enterImageUrl')">
+          </div>
+          <div class="form-group">
+            <label for="priority">{{ getTranslation('priority') }} *</label>
+            <input 
+              type="number" 
+              id="priority" 
+              formControlName="priority" 
+              class="form-control"
+              min="1" 
+              max="10"
+              [placeholder]="getTranslation('enterPriority')">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">{{ getTranslation('startDate') }} *</label>
+            <input 
+              type="date" 
+              id="startDate" 
+              formControlName="startDate" 
+              class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="endDate">{{ getTranslation('endDate') }} *</label>
+            <input 
+              type="date" 
+              id="endDate" 
+              formControlName="endDate" 
+              class="form-control">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="showAddForm = false">
+            {{ getTranslation('cancel') }}
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!bannerForm.valid">
+            {{ getTranslation('addBanner') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="search-filter">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (input)="filterBanners()"
+            [placeholder]="getTranslation('searchBanners')"
+            class="form-control">
+        </div>
+      </div>
+      <div class="status-filter">
+        <select [(ngModel)]="selectedStatus" (change)="filterBanners()" class="form-control">
+          <option value="all">{{ getTranslation('allStatuses') }}</option>
+          <option value="active">{{ getTranslation('active') }}</option>
+          <option value="inactive">{{ getTranslation('inactive') }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banners List -->
+  <div class="banners-list">
+    <div class="list-header">
+      <span class="total-count">{{ getTranslation('totalBanners') }}: {{ filteredBanners.length }}</span>
+    </div>
+    
+    <div class="banners-grid">
+      <div class="banner-card" *ngFor="let banner of filteredBanners">
+        <div class="card-header">
+          <div class="banner-priority">
+            <span class="priority-badge">{{ getTranslation('priority') }}: {{ banner.priority }}</span>
+          </div>
+          <div class="banner-status" [class]="banner.status">
+            <span class="status-badge">
+              {{ getStatusDisplayName(banner.status) }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <div class="banner-image">
+            <img [src]="banner.imageUrl" [alt]="banner.title" class="banner-img">
+          </div>
+          
+          <div class="banner-info">
+            <h3 class="banner-title">{{ banner.title }}</h3>
+            <p class="banner-description">{{ banner.description }}</p>
+            
+            <div class="banner-dates">
+              <div class="date-item">
+                <i class="fas fa-calendar-plus"></i>
+                <span>{{ getTranslation('from') }}: {{ banner.startDate | date:'short' }}</span>
+              </div>
+              <div class="date-item">
+                <i class="fas fa-calendar-minus"></i>
+                <span>{{ getTranslation('to') }}: {{ banner.endDate | date:'short' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-actions">
+          <button 
+            class="btn btn-sm" 
+            [class]="banner.status === 'active' ? 'btn-warning' : 'btn-success'"
+            (click)="toggleBannerStatus(banner)">
+            {{ banner.status === 'active' ? getTranslation('deactivate') : getTranslation('activate') }}
+          </button>
+          <button 
+            class="btn btn-sm btn-danger" 
+            (click)="deleteBanner(banner.id)">
+            {{ getTranslation('delete') }}
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="empty-state" *ngIf="filteredBanners.length === 0">
+      <i class="fas fa-list"></i>
+      <p>{{ getTranslation('noBannersFound') }}</p>
+    </div>
+  </div>
+</div>

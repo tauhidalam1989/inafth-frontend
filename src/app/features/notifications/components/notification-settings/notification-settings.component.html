@@ -1,0 +1,405 @@
+<div class="notification-settings-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="page-title">
+            <i class="fas fa-bell me-2"></i>
+            {{ getTranslation('notificationSettings') }}
+          </h2>
+          <div class="header-actions">
+            <button class="btn btn-outline-secondary me-2" (click)="resetToDefaults()">
+              <i class="fas fa-undo me-2"></i>
+              {{ getTranslation('resetToDefaults') }}
+            </button>
+            <button class="btn btn-primary" (click)="saveSettings()" [disabled]="isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+              <i *ngIf="!isLoading" class="fas fa-save me-2"></i>
+              {{ isLoading ? getTranslation('saving') : getTranslation('saveSettings') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Message -->
+    <div class="row mb-4" *ngIf="saveMessage">
+      <div class="col-12">
+        <div class="alert" [ngClass]="saveMessageType === 'success' ? 'alert-success' : 'alert-danger'">
+          <i [class]="saveMessageType === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+          {{ saveMessage }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Form -->
+    <div class="row">
+      <div class="col-12">
+        <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+          <!-- System Updates -->
+          <div class="settings-section mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-cog me-2"></i>
+                  {{ getTranslation('systemUpdates') }}
+                </h5>
+                <p class="text-white mb-0" style="opacity: 0.9;">{{ getTranslation('systemUpdatesDescription') }}</p>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="system_updates_email"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-envelope me-2"></i>
+                        {{ getTranslation('email') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="system_updates_sms"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-sms me-2"></i>
+                        {{ getTranslation('sms') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="system_updates_push"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        {{ getTranslation('push') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="system_updates_whatsapp"
+                          class="form-check-input"
+                        />
+                        <i class="fab fa-whatsapp me-2"></i>
+                        {{ getTranslation('whatsapp') }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Alerts -->
+          <div class="settings-section mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-shield-alt me-2"></i>
+                  {{ getTranslation('securityAlerts') }}
+                </h5>
+                <p class="text-white mb-0" style="opacity: 0.9;">{{ getTranslation('securityAlertsDescription') }}</p>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="security_alerts_email"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-envelope me-2"></i>
+                        {{ getTranslation('email') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="security_alerts_sms"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-sms me-2"></i>
+                        {{ getTranslation('sms') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="security_alerts_push"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        {{ getTranslation('push') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="security_alerts_whatsapp"
+                          class="form-check-input"
+                        />
+                        <i class="fab fa-whatsapp me-2"></i>
+                        {{ getTranslation('whatsapp') }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- New Messages -->
+          <div class="settings-section mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-comments me-2"></i>
+                  {{ getTranslation('newMessages') }}
+                </h5>
+                <p class="text-white mb-0" style="opacity: 0.9;">{{ getTranslation('newMessagesDescription') }}</p>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="new_messages_email"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-envelope me-2"></i>
+                        {{ getTranslation('email') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="new_messages_sms"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-sms me-2"></i>
+                        {{ getTranslation('sms') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="new_messages_push"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        {{ getTranslation('push') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="new_messages_whatsapp"
+                          class="form-check-input"
+                        />
+                        <i class="fab fa-whatsapp me-2"></i>
+                        {{ getTranslation('whatsapp') }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reminders -->
+          <div class="settings-section mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-bell me-2"></i>
+                  {{ getTranslation('reminders') }}
+                </h5>
+                <p class="text-white mb-0" style="opacity: 0.9;">{{ getTranslation('remindersDescription') }}</p>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="reminders_email"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-envelope me-2"></i>
+                        {{ getTranslation('email') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="reminders_sms"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-sms me-2"></i>
+                        {{ getTranslation('sms') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="reminders_push"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        {{ getTranslation('push') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="reminders_whatsapp"
+                          class="form-check-input"
+                        />
+                        <i class="fab fa-whatsapp me-2"></i>
+                        {{ getTranslation('whatsapp') }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Marketing -->
+          <div class="settings-section mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-bullhorn me-2"></i>
+                  {{ getTranslation('marketing') }}
+                </h5>
+                <p class="text-white mb-0" style="opacity: 0.9;">{{ getTranslation('marketingDescription') }}</p>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="marketing_email"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-envelope me-2"></i>
+                        {{ getTranslation('email') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="marketing_sms"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-sms me-2"></i>
+                        {{ getTranslation('sms') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="marketing_push"
+                          class="form-check-input"
+                        />
+                        <i class="fas fa-mobile-alt me-2"></i>
+                        {{ getTranslation('push') }}
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="notification-option">
+                      <label class="form-check-label">
+                        <input
+                          type="checkbox"
+                          formControlName="marketing_whatsapp"
+                          class="form-check-input"
+                        />
+                        <i class="fab fa-whatsapp me-2"></i>
+                        {{ getTranslation('whatsapp') }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="row">
+            <div class="col-12">
+              <div class="d-flex justify-content-end gap-3">
+                <button type="button" class="btn btn-outline-secondary" (click)="resetToDefaults()">
+                  <i class="fas fa-undo me-2"></i>
+                  {{ getTranslation('resetToDefaults') }}
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+                  <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                  <i *ngIf="!isLoading" class="fas fa-save me-2"></i>
+                  {{ isLoading ? getTranslation('saving') : getTranslation('saveSettings') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

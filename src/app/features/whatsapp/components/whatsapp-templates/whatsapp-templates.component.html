@@ -1,0 +1,346 @@
+<div class="whatsapp-templates-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="page-title">
+            <i class="fab fa-whatsapp me-2"></i>
+            {{ getTranslation('whatsappTemplates') }}
+          </h2>
+          <button 
+            class="btn btn-primary"
+            (click)="showAddForm = !showAddForm"
+          >
+            <i class="fas fa-plus me-2"></i>
+            {{ getTranslation('addTemplate') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Template Form -->
+    <div class="row mb-4" *ngIf="showAddForm">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-plus-circle me-2"></i>
+              {{ editingTemplate ? getTranslation('editTemplate') || 'Edit Template' : getTranslation('addNewTemplate') }}
+            </h5>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="templateForm" (ngSubmit)="addTemplate()" class="row g-3">
+              <div class="col-md-6">
+                <label for="templateName" class="form-label">
+                  <i class="fas fa-tag me-2"></i>
+                  {{ getTranslation('templateName') }}
+                </label>
+                <input
+                  type="text"
+                  id="templateName"
+                  formControlName="name"
+                  class="form-control"
+                  [class.is-invalid]="templateForm.get('name')?.invalid && templateForm.get('name')?.touched"
+                  placeholder="{{ getTranslation('enterTemplateName') }}"
+                />
+                <div class="invalid-feedback" *ngIf="templateForm.get('name')?.invalid && templateForm.get('name')?.touched">
+                  {{ getTranslation('templateNameRequired') }}
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="templateCategory" class="form-label">
+                  <i class="fas fa-folder me-2"></i>
+                  {{ getTranslation('category') }}
+                </label>
+                <select
+                  id="templateCategory"
+                  formControlName="category"
+                  class="form-select"
+                >
+                  <option value="system-updates">{{ getTranslation('systemUpdates') }}</option>
+                  <option value="security-alerts">{{ getTranslation('securityAlerts') }}</option>
+                  <option value="new-messages">{{ getTranslation('newMessages') }}</option>
+                  <option value="reminders">{{ getTranslation('reminders') }}</option>
+                  <option value="marketing">{{ getTranslation('marketing') }}</option>
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label for="templateContent" class="form-label">
+                  <i class="fas fa-comment me-2"></i>
+                  {{ getTranslation('templateContent') }}
+                </label>
+                <textarea
+                  id="templateContent"
+                  formControlName="content"
+                  class="form-control"
+                  rows="4"
+                  [class.is-invalid]="templateForm.get('content')?.invalid && templateForm.get('content')?.touched"
+                  placeholder="{{ getTranslation('enterTemplateContent') }}"
+                ></textarea>
+                <div class="invalid-feedback" *ngIf="templateForm.get('content')?.invalid && templateForm.get('content')?.touched">
+                  {{ getTranslation('templateContentRequired') }}
+                </div>
+                <small class="form-text text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  {{ getTranslation('templateVariablesInfo') }}
+                  <br>
+                  <strong>Example:</strong> Use <code>{{ '{{' }}name{{ '}}' }}</code> or <code>{{ '{{' }}date{{ '}}' }}</code> in your content
+                </small>
+                <!-- Detected Variables Display -->
+                <div *ngIf="detectedVariables.length > 0" class="mt-2">
+                  <div class="alert alert-info mb-0 py-2">
+                    <i class="fas fa-code me-2"></i>
+                    <strong>{{ getTranslation('variables') }}:</strong>
+                    <span class="ms-2">
+                      <span *ngFor="let variable of detectedVariables; let last = last" class="badge bg-primary me-1">
+                        {{ '{{' + variable + '}}' }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-success" [disabled]="templateForm.invalid || isLoading">
+                    <i class="fas fa-save me-2"></i>
+                    <span *ngIf="isLoading">{{ getTranslation('saving') || 'Saving...' }}</span>
+                    <span *ngIf="!isLoading">{{ editingTemplate ? getTranslation('saveChanges') : getTranslation('saveTemplate') }}</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary" (click)="resetForm()">
+                    <i class="fas fa-undo me-2"></i>
+                    {{ getTranslation('reset') }}
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" (click)="resetForm()">
+                    <i class="fas fa-times me-2"></i>
+                    {{ getTranslation('cancel') }}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="searchTemplates" class="form-label">
+                  <i class="fas fa-search me-2"></i>
+                  {{ getTranslation('search') }}
+                </label>
+                <input
+                  type="text"
+                  id="searchTemplates"
+                  [(ngModel)]="searchTerm"
+                  (input)="filterTemplates()"
+                  class="form-control"
+                  placeholder="{{ getTranslation('searchTemplates') }}"
+                />
+              </div>
+
+              <div class="col-md-4">
+                <label for="categoryFilter" class="form-label">
+                  <i class="fas fa-filter me-2"></i>
+                  {{ getTranslation('category') }}
+                </label>
+                <select
+                  id="categoryFilter"
+                  [(ngModel)]="selectedCategory"
+                  (change)="filterTemplates()"
+                  class="form-select"
+                >
+                  <option value="all">{{ getTranslation('allCategories') }}</option>
+                  <option value="system-updates">{{ getTranslation('systemUpdates') }}</option>
+                  <option value="security-alerts">{{ getTranslation('securityAlerts') }}</option>
+                  <option value="new-messages">{{ getTranslation('newMessages') }}</option>
+                  <option value="reminders">{{ getTranslation('reminders') }}</option>
+                  <option value="marketing">{{ getTranslation('marketing') }}</option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label for="statusFilter" class="form-label">
+                  <i class="fas fa-toggle-on me-2"></i>
+                  {{ getTranslation('status') }}
+                </label>
+                <select
+                  id="statusFilter"
+                  [(ngModel)]="selectedStatus"
+                  (change)="filterTemplates()"
+                  class="form-select"
+                >
+                  <option value="all">{{ getTranslation('allStatuses') }}</option>
+                  <option value="active">{{ getTranslation('active') }}</option>
+                  <option value="inactive">{{ getTranslation('inactive') }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Templates List -->
+    <div class="templates-list-section">
+      <div class="list-header">
+        <div class="total-count">
+          <i class="fas fa-list me-2"></i>
+          {{ getTranslation('templates') }}: {{ filteredTemplates.length }}
+        </div>
+        <div class="template-stats">
+          <span class="badge bg-success me-2">
+            {{ getTranslation('active') }}: {{ getActiveTemplatesCount() }}
+          </span>
+          <span class="badge bg-secondary">
+            {{ getTranslation('inactive') }}: {{ getInactiveTemplatesCount() }}
+          </span>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="templates-table">
+          <thead>
+            <tr>
+              <th>{{ getTranslation('templateName') }}</th>
+              <th>{{ getTranslation('category') }}</th>
+              <th>{{ getTranslation('variables') }}</th>
+              <th>{{ getTranslation('usage') }}</th>
+              <th>{{ getTranslation('lastUsed') }}</th>
+              <th>{{ getTranslation('status') }}</th>
+              <th>{{ getTranslation('actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let template of paginatedTemplates" [class.inactive]="template.status === 'inactive'">
+              <td class="name-cell">
+                <div class="template-name">
+                  <strong>{{ template.name }}</strong>
+                  <div class="template-content-preview" *ngIf="template.content">
+                    <small class="text-muted">{{ (template.content.length > 80) ? (template.content | slice:0:80) + '...' : template.content }}</small>
+                  </div>
+                </div>
+              </td>
+              <td class="category-cell">
+                <span class="category-badge" [ngClass]="getCategoryBadgeClass(template.category)">
+                  {{ getCategoryDisplayName(template.category) }}
+                </span>
+              </td>
+              <td class="variables-cell">
+                <div class="variables-list" *ngIf="template.variables.length > 0">
+                  <span *ngFor="let variable of template.variables" class="variable-badge">
+                    {{ '{{' + variable + '}}' }}
+                  </span>
+                </div>
+                <span *ngIf="template.variables.length === 0" class="text-muted">-</span>
+              </td>
+              <td class="usage-cell">
+                <div class="usage-info">
+                  <i class="fas fa-chart-line me-1"></i>
+                  <span>{{ template.usageCount }}</span>
+                </div>
+              </td>
+              <td class="last-used-cell">
+                <div class="last-used-info" *ngIf="template.lastUsed">
+                  <i class="fas fa-clock me-1"></i>
+                  <span>{{ template.lastUsed | date:'short' }}</span>
+                </div>
+                <span *ngIf="!template.lastUsed" class="text-muted">{{ getTranslation('never') }}</span>
+              </td>
+              <td class="status-cell">
+                <span class="status-badge" [class]="template.status">
+                  {{ template.status === 'active' ? getTranslation('active') : getTranslation('inactive') }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <div class="action-buttons">
+                  <button 
+                    class="btn btn-sm btn-outline-primary" 
+                    (click)="editTemplate(template)" 
+                    [title]="getTranslation('edit')"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm"
+                    [ngClass]="template.status === 'active' ? 'btn-success' : 'btn-outline-success'"
+                    (click)="toggleTemplateStatus(template)"
+                    [title]="template.status === 'active' ? getTranslation('deactivate') : getTranslation('activate')"
+                  >
+                    <i [class]="template.status === 'active' ? 'fas fa-toggle-on' : 'fas fa-toggle-off'"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="deleteTemplate(template)"
+                    [title]="getTranslation('delete')"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Empty State -->
+        <div *ngIf="filteredTemplates.length === 0 && !isLoading" class="empty-state">
+          <i class="fas fa-inbox"></i>
+          <p>{{ getTranslation('noTemplatesFound') }}</p>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="empty-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>{{ getTranslation('loading') }}</p>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          {{ errorMessage }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row" *ngIf="totalPages > 1">
+      <div class="col-12">
+        <nav aria-label="Templates pagination">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="onPageChange(currentPage - 1)" [attr.aria-disabled]="currentPage === 1">
+                <i class="fas fa-chevron-left"></i>
+              </a>
+            </li>
+            <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index" [class.active]="currentPage === i + 1">
+              <a class="page-link" (click)="onPageChange(i + 1)">{{ i + 1 }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="onPageChange(currentPage + 1)" [attr.aria-disabled]="currentPage === totalPages">
+                <i class="fas fa-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Confirm Delete Dialog -->
+    <app-confirm-dialog
+      [visible]="showConfirmDialog"
+      [data]="confirmDialogData"
+      (confirmed)="onConfirmDelete()"
+      (cancelled)="onCancelDelete()"
+    ></app-confirm-dialog>
+  </div>
+</div>

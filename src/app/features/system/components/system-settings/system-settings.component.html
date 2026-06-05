@@ -1,0 +1,527 @@
+<div class="system-settings-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-cogs"></i>
+        {{ getTranslation('systemSettings') }}
+      </h1>
+    </div>
+  </div>
+
+  <!-- Save/Test Messages -->
+  <div class="messages-section" *ngIf="saveMessage || testMessage">
+    <div class="alert" [ngClass]="saveMessage ? (saveMessageType === 'success' ? 'alert-success' : 'alert-danger') : (testMessageType === 'success' ? 'alert-success' : 'alert-danger')">
+      <i [class]="(saveMessage ? saveMessageType : testMessageType) === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+      {{ saveMessage || testMessage }}
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs-navigation">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'email'"
+      (click)="switchTab('email')">
+      <i class="fas fa-envelope"></i>
+      {{ getTranslation('email') }}
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'sms'"
+      (click)="switchTab('sms')">
+      <i class="fas fa-sms"></i>
+      {{ getTranslation('sms') }}
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'push'"
+      (click)="switchTab('push')">
+      <i class="fas fa-mobile-alt"></i>
+      {{ getTranslation('push') }}
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'whatsapp'"
+      (click)="switchTab('whatsapp')">
+      <i class="fab fa-whatsapp"></i>
+      {{ getTranslation('whatsapp') }}
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'cloud-storage'"
+      (click)="switchTab('cloud-storage')">
+      <i class="fas fa-cloud"></i>
+      {{ getTranslation('cloudStorage') }}
+    </button>
+  </div>
+
+  <!-- Email Configuration -->
+  <div class="config-section" *ngIf="activeTab === 'email'">
+    <div class="config-card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-envelope"></i>
+          {{ getTranslation('emailConfiguration') }}
+        </h3>
+        <p>{{ getTranslation('emailConfigurationDescription') }}</p>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="emailForm" (ngSubmit)="saveConfiguration('email')">
+          <div class="form-group">
+            <label class="form-check-label">
+              <input type="checkbox" formControlName="isEnabled" class="form-check-input">
+              {{ getTranslation('enableEmailNotifications') }}
+            </label>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ getTranslation('smtpHost') }} *</label>
+              <input type="text" formControlName="smtp_host" class="form-control" [class.is-invalid]="emailForm.get('smtp_host')?.invalid && emailForm.get('smtp_host')?.touched">
+              <div class="invalid-feedback" *ngIf="emailForm.get('smtp_host')?.invalid && emailForm.get('smtp_host')?.touched">
+                {{ getTranslation('smtpHostRequired') }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ getTranslation('smtpPort') }} *</label>
+              <input type="number" formControlName="smtp_port" class="form-control" [class.is-invalid]="emailForm.get('smtp_port')?.invalid && emailForm.get('smtp_port')?.touched">
+              <div class="invalid-feedback" *ngIf="emailForm.get('smtp_port')?.invalid && emailForm.get('smtp_port')?.touched">
+                {{ getTranslation('smtpPortRequired') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-check-label">
+              <input type="checkbox" formControlName="smtp_secure" class="form-check-input">
+              {{ getTranslation('useSecureConnection') }} (TLS/SSL)
+            </label>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ getTranslation('smtpUsername') }} *</label>
+              <input type="text" formControlName="smtp_user" class="form-control" [class.is-invalid]="emailForm.get('smtp_user')?.invalid && emailForm.get('smtp_user')?.touched">
+              <div class="invalid-feedback" *ngIf="emailForm.get('smtp_user')?.invalid && emailForm.get('smtp_user')?.touched">
+                {{ getTranslation('smtpUsernameRequired') }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ getTranslation('smtpPassword') }} *</label>
+              <input type="password" formControlName="smtp_password" class="form-control" [class.is-invalid]="emailForm.get('smtp_password')?.invalid && emailForm.get('smtp_password')?.touched">
+              <div class="invalid-feedback" *ngIf="emailForm.get('smtp_password')?.invalid && emailForm.get('smtp_password')?.touched">
+                {{ getTranslation('smtpPasswordRequired') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ getTranslation('fromEmail') }} *</label>
+              <input type="email" formControlName="from_email" class="form-control" [class.is-invalid]="emailForm.get('from_email')?.invalid && emailForm.get('from_email')?.touched">
+              <div class="invalid-feedback" *ngIf="emailForm.get('from_email')?.invalid && emailForm.get('from_email')?.touched">
+                {{ getTranslation('fromEmailRequired') }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ getTranslation('fromName') }} *</label>
+              <input type="text" formControlName="from_name" class="form-control" [class.is-invalid]="emailForm.get('from_name')?.invalid && emailForm.get('from_name')?.touched">
+              <div class="invalid-feedback" *ngIf="emailForm.get('from_name')?.invalid && emailForm.get('from_name')?.touched">
+                {{ getTranslation('fromNameRequired') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline-primary" (click)="testConfiguration('email')" [disabled]="isLoading || emailForm.invalid">
+              <i class="fas fa-vial"></i>
+              {{ getTranslation('testConfiguration') }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading || emailForm.invalid">
+              <i class="fas fa-save"></i>
+              {{ isLoading ? getTranslation('saving') : getTranslation('saveConfiguration') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMS Configuration -->
+  <div class="config-section" *ngIf="activeTab === 'sms'">
+    <div class="config-card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-sms"></i>
+          {{ getTranslation('smsConfiguration') }}
+        </h3>
+        <p>{{ getTranslation('smsConfigurationDescription') }}</p>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="smsForm" (ngSubmit)="saveConfiguration('sms')">
+          <div class="form-group">
+            <label class="form-check-label">
+              <input type="checkbox" formControlName="isEnabled" class="form-check-input">
+              {{ getTranslation('enableSMSNotifications') }}
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getTranslation('smsProvider') }} *</label>
+            <select formControlName="provider" class="form-control" [class.is-invalid]="smsForm.get('provider')?.invalid && smsForm.get('provider')?.touched">
+              <option value="">{{ getTranslation('selectProvider') }}</option>
+              <option value="twilio">Twilio</option>
+              <option value="nexmo">Vonage (Nexmo)</option>
+              <option value="aws-sns">AWS SNS</option>
+              <option value="other">{{ getTranslation('other') }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="smsForm.get('provider')?.invalid && smsForm.get('provider')?.touched">
+              {{ getTranslation('smsProviderRequired') }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ getTranslation('apiKey') }} *</label>
+              <input type="text" formControlName="api_key" class="form-control" [class.is-invalid]="smsForm.get('api_key')?.invalid && smsForm.get('api_key')?.touched">
+              <div class="invalid-feedback" *ngIf="smsForm.get('api_key')?.invalid && smsForm.get('api_key')?.touched">
+                {{ getTranslation('apiKeyRequired') }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ getTranslation('apiSecret') }} *</label>
+              <input type="password" formControlName="api_secret" class="form-control" [class.is-invalid]="smsForm.get('api_secret')?.invalid && smsForm.get('api_secret')?.touched">
+              <div class="invalid-feedback" *ngIf="smsForm.get('api_secret')?.invalid && smsForm.get('api_secret')?.touched">
+                {{ getTranslation('apiSecretRequired') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getTranslation('senderId') }} *</label>
+            <input type="text" formControlName="sender_id" class="form-control" [class.is-invalid]="smsForm.get('sender_id')?.invalid && smsForm.get('sender_id')?.touched">
+            <div class="invalid-feedback" *ngIf="smsForm.get('sender_id')?.invalid && smsForm.get('sender_id')?.touched">
+              {{ getTranslation('senderIdRequired') }}
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline-primary" (click)="testConfiguration('sms')" [disabled]="isLoading || smsForm.invalid">
+              <i class="fas fa-vial"></i>
+              {{ getTranslation('testConfiguration') }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading || smsForm.invalid">
+              <i class="fas fa-save"></i>
+              {{ isLoading ? getTranslation('saving') : getTranslation('saveConfiguration') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Push Configuration -->
+  <div class="config-section" *ngIf="activeTab === 'push'">
+    <div class="config-card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-mobile-alt"></i>
+          {{ getTranslation('pushConfiguration') }}
+        </h3>
+        <p>{{ getTranslation('pushConfigurationDescription') }}</p>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="pushForm" (ngSubmit)="saveConfiguration('push')">
+          <div class="form-group">
+            <label class="form-check-label">
+              <input type="checkbox" formControlName="isEnabled" class="form-check-input">
+              {{ getTranslation('enablePushNotifications') }}
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getTranslation('pushProvider') }} *</label>
+            <select formControlName="provider" class="form-control" [class.is-invalid]="pushForm.get('provider')?.invalid && pushForm.get('provider')?.touched">
+              <option value="">{{ getTranslation('selectProvider') }}</option>
+              <option value="fcm">Firebase Cloud Messaging (FCM)</option>
+              <option value="apns">Apple Push Notification Service (APNS)</option>
+              <option value="other">{{ getTranslation('other') }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="pushForm.get('provider')?.invalid && pushForm.get('provider')?.touched">
+              {{ getTranslation('pushProviderRequired') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getTranslation('serverKey') }} *</label>
+            <input type="text" formControlName="server_key" class="form-control" [class.is-invalid]="pushForm.get('server_key')?.invalid && pushForm.get('server_key')?.touched">
+            <div class="invalid-feedback" *ngIf="pushForm.get('server_key')?.invalid && pushForm.get('server_key')?.touched">
+              {{ getTranslation('serverKeyRequired') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getTranslation('projectId') }} *</label>
+            <input type="text" formControlName="project_id" class="form-control" [class.is-invalid]="pushForm.get('project_id')?.invalid && pushForm.get('project_id')?.touched">
+            <div class="invalid-feedback" *ngIf="pushForm.get('project_id')?.invalid && pushForm.get('project_id')?.touched">
+              {{ getTranslation('projectIdRequired') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getTranslation('serviceAccount') }}</label>
+            <textarea formControlName="service_account" class="form-control" rows="4" placeholder="{{ getTranslation('serviceAccountPlaceholder') }}"></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline-primary" (click)="testConfiguration('push')" [disabled]="isLoading || pushForm.invalid">
+              <i class="fas fa-vial"></i>
+              {{ getTranslation('testConfiguration') }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading || pushForm.invalid">
+              <i class="fas fa-save"></i>
+              {{ isLoading ? getTranslation('saving') : getTranslation('saveConfiguration') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- WhatsApp Configuration -->
+  <div class="config-section" *ngIf="activeTab === 'whatsapp'">
+    <div class="config-card">
+      <div class="card-header">
+        <h3>
+          <i class="fab fa-whatsapp"></i>
+          {{ getTranslation('whatsappConfiguration') }}
+        </h3>
+        <p>{{ getTranslation('whatsappConfigurationDescription') }}</p>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="whatsappForm" (ngSubmit)="saveConfiguration('whatsapp')">
+          <div class="form-group">
+            <label class="form-check-label">
+              <input type="checkbox" formControlName="isEnabled" class="form-check-input">
+              {{ getTranslation('enableWhatsAppNotifications') }}
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getTranslation('whatsappProvider') }} *</label>
+            <select formControlName="provider" class="form-control" [class.is-invalid]="whatsappForm.get('provider')?.invalid && whatsappForm.get('provider')?.touched">
+              <option value="">{{ getTranslation('selectProvider') }}</option>
+              <option value="twilio">Twilio WhatsApp API</option>
+              <option value="meta">Meta WhatsApp Business API</option>
+              <option value="other">{{ getTranslation('other') }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="whatsappForm.get('provider')?.invalid && whatsappForm.get('provider')?.touched">
+              {{ getTranslation('whatsappProviderRequired') }}
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ getTranslation('apiKey') }} *</label>
+              <input type="text" formControlName="api_key" class="form-control" [class.is-invalid]="whatsappForm.get('api_key')?.invalid && whatsappForm.get('api_key')?.touched">
+              <div class="invalid-feedback" *ngIf="whatsappForm.get('api_key')?.invalid && whatsappForm.get('api_key')?.touched">
+                {{ getTranslation('apiKeyRequired') }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ getTranslation('apiSecret') }} *</label>
+              <input type="password" formControlName="api_secret" class="form-control" [class.is-invalid]="whatsappForm.get('api_secret')?.invalid && whatsappForm.get('api_secret')?.touched">
+              <div class="invalid-feedback" *ngIf="whatsappForm.get('api_secret')?.invalid && whatsappForm.get('api_secret')?.touched">
+                {{ getTranslation('apiSecretRequired') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ getTranslation('phoneNumberId') }} *</label>
+              <input type="text" formControlName="phone_number_id" class="form-control" [class.is-invalid]="whatsappForm.get('phone_number_id')?.invalid && whatsappForm.get('phone_number_id')?.touched">
+              <div class="invalid-feedback" *ngIf="whatsappForm.get('phone_number_id')?.invalid && whatsappForm.get('phone_number_id')?.touched">
+                {{ getTranslation('phoneNumberIdRequired') }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ getTranslation('businessAccountId') }} *</label>
+              <input type="text" formControlName="business_account_id" class="form-control" [class.is-invalid]="whatsappForm.get('business_account_id')?.invalid && whatsappForm.get('business_account_id')?.touched">
+              <div class="invalid-feedback" *ngIf="whatsappForm.get('business_account_id')?.invalid && whatsappForm.get('business_account_id')?.touched">
+                {{ getTranslation('businessAccountIdRequired') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline-primary" (click)="testConfiguration('whatsapp')" [disabled]="isLoading || whatsappForm.invalid">
+              <i class="fas fa-vial"></i>
+              {{ getTranslation('testConfiguration') }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading || whatsappForm.invalid">
+              <i class="fas fa-save"></i>
+              {{ isLoading ? getTranslation('saving') : getTranslation('saveConfiguration') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cloud Storage Configuration -->
+  <div class="config-section" *ngIf="activeTab === 'cloud-storage'">
+    <div class="config-card">
+      <div class="card-header">
+        <h3>
+          <i class="fas fa-cloud"></i>
+          {{ getTranslation('cloudStorageConfiguration') }}
+        </h3>
+        <p>{{ getTranslation('cloudStorageConfigurationDescription') }}</p>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="cloudStorageForm" (ngSubmit)="saveCloudStorageConfig()">
+          <div class="form-group">
+            <label class="form-check-label">
+              <input type="checkbox" formControlName="enabled" class="form-check-input">
+              {{ getTranslation('enableCloudStorage') }}
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>{{ getTranslation('cloudStorageProvider') }} *</label>
+            <select formControlName="provider" class="form-control" (change)="onCloudStorageProviderChange()" [class.is-invalid]="cloudStorageForm.get('provider')?.invalid && cloudStorageForm.get('provider')?.touched">
+              <option value="local">{{ getTranslation('localStorage') }}</option>
+              <option value="aws-s3">AWS S3</option>
+              <option value="google-cloud">Google Cloud Storage</option>
+              <option value="azure">Azure Blob Storage</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="cloudStorageForm.get('provider')?.invalid && cloudStorageForm.get('provider')?.touched">
+              {{ getTranslation('cloudStorageProviderRequired') }}
+            </div>
+          </div>
+
+          <!-- AWS S3 Configuration -->
+          <div *ngIf="cloudStorageForm.value.provider === 'aws-s3'">
+            <h4 class="section-title">{{ getTranslation('awsS3Configuration') }}</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>{{ getTranslation('awsAccessKeyId') }} *</label>
+                <input type="text" formControlName="awsAccessKeyId" class="form-control" [class.is-invalid]="cloudStorageForm.get('awsAccessKeyId')?.invalid && cloudStorageForm.get('awsAccessKeyId')?.touched">
+              </div>
+              <div class="form-group">
+                <label>{{ getTranslation('awsSecretAccessKey') }} *</label>
+                <input type="password" formControlName="awsSecretAccessKey" class="form-control" [class.is-invalid]="cloudStorageForm.get('awsSecretAccessKey')?.invalid && cloudStorageForm.get('awsSecretAccessKey')?.touched">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>{{ getTranslation('awsRegion') }} *</label>
+                <input type="text" formControlName="awsRegion" class="form-control" placeholder="us-east-1" [class.is-invalid]="cloudStorageForm.get('awsRegion')?.invalid && cloudStorageForm.get('awsRegion')?.touched">
+              </div>
+              <div class="form-group">
+                <label>{{ getTranslation('awsBucket') }} *</label>
+                <input type="text" formControlName="awsBucket" class="form-control" [class.is-invalid]="cloudStorageForm.get('awsBucket')?.invalid && cloudStorageForm.get('awsBucket')?.touched">
+              </div>
+            </div>
+          </div>
+
+          <!-- Google Cloud Storage Configuration -->
+          <div *ngIf="cloudStorageForm.value.provider === 'google-cloud'">
+            <h4 class="section-title">{{ getTranslation('googleCloudStorageConfiguration') }}</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>{{ getTranslation('gcsProjectId') }} *</label>
+                <input type="text" formControlName="gcsProjectId" class="form-control" [class.is-invalid]="cloudStorageForm.get('gcsProjectId')?.invalid && cloudStorageForm.get('gcsProjectId')?.touched">
+              </div>
+              <div class="form-group">
+                <label>{{ getTranslation('gcsBucket') }} *</label>
+                <input type="text" formControlName="gcsBucket" class="form-control" [class.is-invalid]="cloudStorageForm.get('gcsBucket')?.invalid && cloudStorageForm.get('gcsBucket')?.touched">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ getTranslation('gcsKeyFile') }}</label>
+              <textarea formControlName="gcsKeyFile" class="form-control" rows="4" placeholder="{{ getTranslation('gcsKeyFilePlaceholder') }}"></textarea>
+            </div>
+          </div>
+
+          <!-- Azure Blob Storage Configuration -->
+          <div *ngIf="cloudStorageForm.value.provider === 'azure'">
+            <h4 class="section-title">{{ getTranslation('azureBlobStorageConfiguration') }}</h4>
+            
+            <div class="form-group">
+              <label>{{ getTranslation('azureAccountName') }} *</label>
+              <input type="text" formControlName="azureAccountName" class="form-control" [class.is-invalid]="cloudStorageForm.get('azureAccountName')?.invalid && cloudStorageForm.get('azureAccountName')?.touched">
+            </div>
+
+            <div class="form-group">
+              <label>{{ getTranslation('azureContainer') }} *</label>
+              <input type="text" formControlName="azureContainer" class="form-control" [class.is-invalid]="cloudStorageForm.get('azureContainer')?.invalid && cloudStorageForm.get('azureContainer')?.touched">
+            </div>
+
+            <div class="form-group">
+              <label>{{ getTranslation('azureAuthMethod') }} *</label>
+              <select formControlName="azureAuthMethod" class="form-control" (change)="onAzureAuthMethodChange()">
+                <option value="account-key">{{ getTranslation('azureAccountKeyAuth') }}</option>
+                <option value="azure-ad">{{ getTranslation('azureADAuth') }}</option>
+              </select>
+            </div>
+
+            <!-- Account Key Authentication -->
+            <div *ngIf="cloudStorageForm.value.azureAuthMethod === 'account-key'">
+              <div class="form-group">
+                <label>{{ getTranslation('azureAccountKey') }} *</label>
+                <input type="password" formControlName="azureAccountKey" class="form-control" [class.is-invalid]="cloudStorageForm.get('azureAccountKey')?.invalid && cloudStorageForm.get('azureAccountKey')?.touched">
+              </div>
+            </div>
+
+            <!-- Azure AD Authentication -->
+            <div *ngIf="cloudStorageForm.value.azureAuthMethod === 'azure-ad'">
+              <div class="form-group">
+                <label>{{ getTranslation('azureClientId') }} *</label>
+                <input type="text" formControlName="azureClientId" class="form-control" placeholder="54a88f72-745d-432f-b63c-b6ac657b0e18" [class.is-invalid]="cloudStorageForm.get('azureClientId')?.invalid && cloudStorageForm.get('azureClientId')?.touched">
+              </div>
+              <div class="form-group">
+                <label>{{ getTranslation('azureTenantId') }} *</label>
+                <input type="text" formControlName="azureTenantId" class="form-control" placeholder="70ca47a3-3991-4823-8769-6da1f74d05c3" [class.is-invalid]="cloudStorageForm.get('azureTenantId')?.invalid && cloudStorageForm.get('azureTenantId')?.touched">
+              </div>
+              <div class="form-group">
+                <label>{{ getTranslation('azureClientSecret') }} *</label>
+                <input type="password" formControlName="azureClientSecret" class="form-control" [class.is-invalid]="cloudStorageForm.get('azureClientSecret')?.invalid && cloudStorageForm.get('azureClientSecret')?.touched">
+                <small class="form-text text-muted">{{ getTranslation('azureClientSecretHint') }}</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Local Storage Configuration -->
+          <div *ngIf="cloudStorageForm.value.provider === 'local'">
+            <h4 class="section-title">{{ getTranslation('localStorageConfiguration') }}</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>{{ getTranslation('localUploadPath') }}</label>
+                <input type="text" formControlName="localUploadPath" class="form-control" placeholder="./uploads">
+              </div>
+              <div class="form-group">
+                <label>{{ getTranslation('baseUrl') }}</label>
+                <input type="url" formControlName="baseUrl" class="form-control" placeholder="http://localhost:3000">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline-primary" (click)="testCloudStorageConfig()" [disabled]="isLoading || cloudStorageForm.invalid">
+              <i class="fas fa-vial"></i>
+              {{ getTranslation('testConfiguration') }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading || cloudStorageForm.invalid">
+              <i class="fas fa-save"></i>
+              {{ isLoading ? getTranslation('saving') : getTranslation('saveConfiguration') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+

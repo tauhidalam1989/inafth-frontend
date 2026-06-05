@@ -1,0 +1,300 @@
+<div class="special-divisions-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Confirm Dialog -->
+  <app-confirm-dialog
+    [visible]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="onCancelDelete()">
+  </app-confirm-dialog>
+
+  <div class="container-fluid">
+    <!-- Success Banner -->
+    <div class="alert alert-success alert-dismissible fade show" role="alert" *ngIf="showSuccessBanner">
+      <i class="fas fa-check-circle me-2"></i>
+      {{ editingDivision ? getTranslation('divisionUpdatedSuccessfully') : getTranslation('divisionAddedSuccessfully') }}
+      <button type="button" class="btn-close" (click)="showSuccessBanner = false"></button>
+    </div>
+
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          <i class="fas fa-folder-open"></i>
+          {{ getTranslation('specialDivisions') }}
+        </h1>
+        <div class="header-actions">
+          <button 
+            type="button"
+            class="btn btn-primary"
+            (click)="showUserList = false"
+            *ngIf="!editingDivision">
+            <i class="fas fa-plus"></i>
+            {{ getTranslation('addSpecialDivision') }}
+          </button>
+          <button 
+            type="button"
+            class="btn btn-secondary"
+            (click)="showUserList = true"
+            *ngIf="!editingDivision">
+            <i class="fas fa-list"></i>
+            {{ getTranslation('showDivisionsList') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Division Form -->
+    <div class="add-division-form" *ngIf="!showUserList">
+      <div class="form-card">
+        <h3 class="form-title">
+          {{ editingDivision ? getTranslation('editSpecialDivision') : getTranslation('addNewSpecialDivision') }}
+        </h3>
+        <form [formGroup]="divisionForm" (ngSubmit)="saveDivision()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">{{ getTranslation('divisionName') }} *</label>
+              <input 
+                type="text" 
+                id="name" 
+                formControlName="name" 
+                class="form-control"
+                [placeholder]="getTranslation('enterDivisionName')">
+            </div>
+            <div class="form-group">
+              <label for="code">{{ getTranslation('divisionCode') }} *</label>
+              <input 
+                type="text" 
+                id="code" 
+                formControlName="code" 
+                class="form-control"
+                [placeholder]="getTranslation('enterDivisionCode')">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="category">{{ getTranslation('category') }} *</label>
+              <input 
+                type="text" 
+                id="category" 
+                formControlName="category" 
+                class="form-control"
+                [class.is-invalid]="divisionForm.get('category')?.invalid && divisionForm.get('category')?.touched"
+                [placeholder]="getTranslation('selectCategory')">
+              <div class="invalid-feedback" *ngIf="divisionForm.get('category')?.invalid && divisionForm.get('category')?.touched">
+                {{ getTranslation('categoryRequired') }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="priority">{{ getTranslation('priority') }} *</label>
+              <select id="priority" formControlName="priority" class="form-control">
+                <option value="">{{ getTranslation('selectPriority') || 'Select Priority' }}</option>
+                <option value="high">{{ getTranslation('high') }}</option>
+                <option value="medium">{{ getTranslation('medium') }}</option>
+                <option value="low">{{ getTranslation('low') }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location">{{ getTranslation('location') }} *</label>
+              <input 
+                type="text" 
+                id="location" 
+                formControlName="location" 
+                class="form-control"
+                [placeholder]="getTranslation('enterLocation')">
+            </div>
+            <div class="form-group">
+              <label for="description">{{ getTranslation('description') }}</label>
+              <textarea 
+                id="description" 
+                formControlName="description" 
+                class="form-control"
+                rows="3"
+                [placeholder]="getTranslation('enterDivisionDescription')"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="editingDivision ? cancelEdit() : resetForm()">
+              {{ editingDivision ? getTranslation('cancel') : getTranslation('reset') }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="!divisionForm.valid">
+              {{ editingDivision ? getTranslation('saveChanges') : getTranslation('saveDivision') }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary" (click)="showUserList = true">
+              <i class="fas fa-times"></i>
+              {{ getTranslation('cancel') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section" *ngIf="showUserList">
+      <div class="filters-card">
+        <div class="search-filter">
+          <div class="search-input">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (input)="filterDivisions()"
+              [placeholder]="getTranslation('searchDivisions')"
+              class="form-control">
+          </div>
+        </div>
+        <div class="category-filter">
+          <select [(ngModel)]="selectedCategory" (change)="filterDivisions()" class="form-control">
+            <option value="all">{{ getTranslation('allCategories') }}</option>
+            <option value="government">{{ getTranslation('government') }}</option>
+            <option value="educational">{{ getTranslation('educational') }}</option>
+            <option value="healthcare">{{ getTranslation('healthcare') }}</option>
+            <option value="religious">{{ getTranslation('religious') }}</option>
+            <option value="recreational">{{ getTranslation('recreational') }}</option>
+          </select>
+        </div>
+        <div class="priority-filter">
+          <select [(ngModel)]="selectedPriority" (change)="filterDivisions()" class="form-control">
+            <option value="all">{{ getTranslation('allPriorities') }}</option>
+            <option value="high">{{ getTranslation('high') }}</option>
+            <option value="medium">{{ getTranslation('medium') }}</option>
+            <option value="low">{{ getTranslation('low') }}</option>
+          </select>
+        </div>
+        <div class="location-filter">
+          <select [(ngModel)]="selectedLocation" (change)="filterDivisions()" class="form-control">
+            <option value="all">{{ getTranslation('allLocations') }}</option>
+            <option *ngFor="let location of getUniqueLocations()" [value]="location">{{ location }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divisions Table -->
+    <div class="divisions-list" *ngIf="showUserList">
+      <div class="list-header">
+        <span class="total-count">{{ getTranslation('specialDivisionsList') }}: {{ filteredDivisions.length }}</span>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>{{ getTranslation('name') }}</th>
+              <th>{{ getTranslation('code') }}</th>
+              <th>{{ getTranslation('category') }}</th>
+              <th>{{ getTranslation('priority') }}</th>
+              <th>{{ getTranslation('location') }}</th>
+              <th>{{ getTranslation('createdDate') }}</th>
+              <th>{{ getTranslation('actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let division of paginatedDivisions">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="location-avatar me-2">
+                    <i class="fas fa-folder-open"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold">{{ division.name }}</div>
+                    <small class="text-muted" *ngIf="division.description">{{ division.description }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-info">{{ division.code }}</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getCategoryBadgeClass(division.category)">
+                  {{ getCategoryDisplayName(division.category) }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getPriorityBadgeClass(division.priority)">
+                  {{ getPriorityDisplayName(division.priority) }}
+                </span>
+              </td>
+              <td>{{ division.location }}</td>
+              <td>{{ division.createdAt | date:'short' }}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button 
+                    class="btn btn-sm btn-outline-primary"
+                    (click)="editDivision(division)"
+                    [title]="getTranslation('edit')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-outline-danger" 
+                    (click)="deleteDivision(division.id)"
+                    [title]="getTranslation('delete')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="empty-state" *ngIf="filteredDivisions.length === 0">
+        <i class="fas fa-folder-open"></i>
+        <p>{{ getTranslation('noDivisionsFound') }}</p>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center mt-4" *ngIf="filteredDivisions.length > 0">
+        <div class="pagination-info">
+          <span class="text-muted">
+            {{ getTranslation('showing') }} {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredDivisions.length) }} {{ getTranslation('of') }} {{ filteredDivisions.length }}
+          </span>
+          <div class="mt-2">
+            <label class="form-label me-2">{{ getTranslation('itemsPerPage') }}:</label>
+            <select class="form-select form-select-sm d-inline-block w-auto" [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+        
+        <nav aria-label="Special Divisions pagination">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+                {{ getTranslation('previous') }}
+              </button>
+            </li>
+            
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="goToPage(1)" [disabled]="currentPage === 1">
+                {{ getTranslation('first') }}
+              </button>
+            </li>
+            
+            <li class="page-item" *ngFor="let page of getVisiblePages()" [class.active]="page === currentPage">
+              <button class="page-link" (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </li>
+            
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">
+                {{ getTranslation('next') }}
+              </button>
+            </li>
+            
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="goToPage(totalPages)" [disabled]="currentPage === totalPages">
+                {{ getTranslation('last') }}
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

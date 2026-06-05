@@ -1,0 +1,923 @@
+<div class="screen-playback-container">
+  <div class="page-header">
+    <h1 class="page-title">
+      <i class="fas fa-play-circle"></i>
+      {{ getTranslation('videoPlaybackControl') || 'Video Playback Control' }}
+    </h1>
+    <p class="page-subtitle">{{ getTranslation('controlVideoPlayback') || 'Control video playback on your screens' }}</p>
+  </div>
+
+  <!-- Tabs: By Screen | By Group -->
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button
+        class="nav-link"
+        [class.active]="activePlaybackTab === 0"
+        (click)="activePlaybackTab = 0"
+        type="button"
+        role="tab">
+        {{ getTranslation('byScreen') || 'By Screen' }}
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button
+        class="nav-link"
+        [class.active]="activePlaybackTab === 1"
+        (click)="activePlaybackTab = 1"
+        type="button"
+        role="tab">
+        {{ getTranslation('byGroup') || 'By Group' }}
+      </button>
+    </li>
+  </ul>
+
+  <!-- By Screen tab: existing content unchanged -->
+  <div class="content-wrapper" *ngIf="activePlaybackTab === 0">
+    <!-- Screen Selection -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3 class="card-title">{{ getTranslation('selectScreen') || 'Select Screen' }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="screen-selection">
+          <select 
+            class="form-select" 
+            [(ngModel)]="selectedScreenId"
+            (change)="onScreenChange()"
+            [disabled]="isLoading || screens.length === 0">
+            <option [ngValue]="null" disabled>{{ getTranslation('selectScreen') || 'Select a screen...' }}</option>
+            <option *ngFor="let screen of screens" [ngValue]="screen.id">
+              {{ screen.name }} - {{ screen.location || 'No location' }} 
+              <span [class]="'status-badge ' + getScreenStatusClass(screen.status)">
+                {{ getScreenStatusText(screen.status) }}
+              </span>
+            </option>
+          </select>
+        </div>
+
+        <!-- Selected Screen Info -->
+        <div *ngIf="selectedScreen" class="selected-screen-info mt-3">
+          <div class="row">
+            <!-- Basic Information -->
+            <div class="col-md-6 mb-3">
+              <h5 class="section-title">
+                <i class="fas fa-info-circle me-2"></i>
+                {{ getTranslation('basicInformation') || 'Basic Information' }}
+              </h5>
+              <div class="info-item">
+                <strong>{{ getTranslation('screenName') || 'Screen Name' }}:</strong>
+                <span>{{ selectedScreen.name }}</span>
+              </div>
+              <div class="info-item">
+                <strong>{{ getTranslation('status') || 'Status' }}:</strong>
+                <span [class]="'status-badge ' + getScreenStatusClass(selectedScreen.status)">
+                  {{ getScreenStatusText(selectedScreen.status) }}
+                </span>
+              </div>
+              <div class="info-item">
+                <strong>{{ getTranslation('ipAddress') || 'IP Address' }}:</strong>
+                <span>{{ selectedScreen.ipAddress || 'N/A' }}</span>
+              </div>
+              <!-- <div class="info-item d-flex align-items-center gap-2 flex-wrap">
+                <label class="mb-0 small text-muted">{{ getTranslation('setIpForLocalTest') || 'Set IP for local test' }}:</label>
+                <input type="text" class="form-control form-control-sm" style="max-width: 140px;" [(ngModel)]="screenIpForEdit" placeholder="127.0.0.1 or LAN IP" />
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="updateScreenIp()" [disabled]="isUpdatingIp">
+                  <span *ngIf="isUpdatingIp" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  {{ getTranslation('updateIp') || 'Update IP' }}
+                </button>
+              </div> -->
+              <div class="info-item">
+                <strong>{{ getTranslation('macAddress') || 'MAC Address' }}:</strong>
+                <span>{{ selectedScreen.macAddress || 'N/A' }}</span>
+              </div>
+              <div class="info-item d-flex align-items-center gap-2 flex-wrap">
+                <strong>{{ getTranslation('deviceId') || 'Device ID' }}:</strong>
+                <span>{{ selectedScreen.deviceId || 'N/A' }}</span>
+                <!-- <a *ngIf="selectedScreen.deviceId && getPlayerUrl()" [href]="getPlayerUrl()" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                  {{ getTranslation('openPlayer') || 'Open player' }}
+                </a> -->
+              </div>
+              <div class="info-item">
+                <strong>{{ getTranslation('lastConnected') || 'Last Connected' }}:</strong>
+                <span>{{ selectedScreen.lastConnected | date:'short' }}</span>
+              </div>
+            </div>
+
+            <!-- Group Information -->
+            <div class="col-md-6 mb-3">
+              <h5 class="section-title">
+                <i class="fas fa-layer-group me-2"></i>
+                {{ getTranslation('groupInformation') || 'Group Information' }}
+              </h5>
+              <div class="info-item" *ngIf="selectedScreen.groupName">
+                <strong>{{ getTranslation('groupName') || 'Group Name' }}:</strong>
+                <span class="badge bg-primary">{{ selectedScreen.groupName }}</span>
+              </div>
+              <div class="info-item" *ngIf="!selectedScreen.groupName">
+                <span class="text-muted">{{ getTranslation('noGroupAssigned') || 'No group assigned' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Location Information -->
+          <div class="row mt-3" *ngIf="selectedScreen.subsiteName || selectedScreen.sectionName || selectedScreen.specialDivisionName">
+            <div class="col-12 mb-3">
+              <h5 class="section-title">
+                <i class="fas fa-map-marker-alt me-2"></i>
+                {{ getTranslation('locationInformation') || 'Location Information' }}
+              </h5>
+              <div class="location-path">
+                <span *ngIf="selectedScreen.subsiteName" class="badge bg-info me-2">
+                  <i class="fas fa-building me-1"></i>
+                  {{ selectedScreen.subsiteName }}
+                </span>
+                <span *ngIf="selectedScreen.sectionName" class="badge bg-info me-2">
+                  <i class="fas fa-door-open me-1"></i>
+                  {{ selectedScreen.sectionName }}
+                </span>
+                <span *ngIf="selectedScreen.specialDivisionName" class="badge bg-info me-2">
+                  <i class="fas fa-map-pin me-1"></i>
+                  {{ selectedScreen.specialDivisionName }}
+                </span>
+                <span *ngIf="!selectedScreen.subsiteName && !selectedScreen.sectionName && !selectedScreen.specialDivisionName" class="text-muted">
+                  {{ getTranslation('noLocationAssigned') || 'No location assigned' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Assignment -->
+          <div class="row mt-3" *ngIf="selectedScreen.assignedUserName || (selectedScreen.assignedUserIds && selectedScreen.assignedUserIds.length > 0)">
+            <div class="col-12 mb-3">
+              <h5 class="section-title">
+                <i class="fas fa-user me-2"></i>
+                {{ getTranslation('assignedUsers') || 'Assigned Users' }}
+              </h5>
+              <div class="info-item">
+                <span *ngIf="selectedScreen.assignedUserName" class="badge bg-success me-2">
+                  <i class="fas fa-user-check me-1"></i>
+                  {{ selectedScreen.assignedUserName }}
+                </span>
+                <span *ngIf="selectedScreen.assignedUserIds && selectedScreen.assignedUserIds.length > 1" class="badge bg-secondary">
+                  +{{ selectedScreen.assignedUserIds.length - 1 }} {{ getTranslation('more') || 'more' }}
+                </span>
+                <span *ngIf="!selectedScreen.assignedUserName && (!selectedScreen.assignedUserIds || selectedScreen.assignedUserIds.length === 0)" class="text-muted">
+                  {{ getTranslation('noUserAssigned') || 'No user assigned' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Schedule Information -->
+          <div class="row mt-3" *ngIf="selectedScreen.startDate || selectedScreen.endDate || selectedScreen.startTime || selectedScreen.endTime">
+            <div class="col-md-6 mb-3">
+              <h5 class="section-title">
+                <i class="fas fa-calendar-alt me-2"></i>
+                {{ getTranslation('schedule') || 'Schedule' }}
+              </h5>
+              <div class="info-item" *ngIf="selectedScreen.startDate">
+                <strong>{{ getTranslation('startDate') || 'Start Date' }}:</strong>
+                <span>{{ selectedScreen.startDate | date:'shortDate' }}</span>
+              </div>
+              <div class="info-item" *ngIf="selectedScreen.endDate">
+                <strong>{{ getTranslation('endDate') || 'End Date' }}:</strong>
+                <span>{{ selectedScreen.endDate | date:'shortDate' }}</span>
+              </div>
+              <div class="info-item" *ngIf="selectedScreen.startTime">
+                <strong>{{ getTranslation('startTime') || 'Start Time' }}:</strong>
+                <span>{{ selectedScreen.startTime }}</span>
+              </div>
+              <div class="info-item" *ngIf="selectedScreen.endTime">
+                <strong>{{ getTranslation('endTime') || 'End Time' }}:</strong>
+                <span>{{ selectedScreen.endTime }}</span>
+              </div>
+              <div class="info-item" *ngIf="!selectedScreen.startDate && !selectedScreen.endDate && !selectedScreen.startTime && !selectedScreen.endTime">
+                <span class="text-muted">{{ getTranslation('noScheduleSet') || 'No schedule set' }}</span>
+              </div>
+            </div>
+
+            <!-- Screen Display Settings -->
+            <div class="col-md-6 mb-3">
+              <h5 class="section-title">
+                <i class="fas fa-cog me-2"></i>
+                {{ getTranslation('displaySettings') || 'Display Settings' }}
+              </h5>
+              <div class="info-item">
+                <strong>{{ getTranslation('orientation') || 'Orientation' }}:</strong>
+                <span class="badge bg-secondary">{{ selectedScreen.orientation || 'landscape' }}</span>
+              </div>
+              <div class="info-item">
+                <strong>{{ getTranslation('screenSize') || 'Screen Size' }}:</strong>
+                <span class="badge bg-secondary">{{ selectedScreen.screenSize || 'medium' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen Regions Setup -->
+    <div class="card mb-4" *ngIf="selectedScreen">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-th-large me-2"></i>
+          {{ getTranslation('screenRegions') || 'Screen Regions' }}
+        </h3>
+      </div>
+      <div class="card-body">
+        <div *ngIf="isLoadingRegions" class="text-center py-3">
+          <div class="spinner-border spinner-border-sm" role="status"></div>
+          {{ getTranslation('loading') || 'Loading...' }}
+        </div>
+        
+        <!-- Region Setup & Editor -->
+        <div class="region-setup-editor">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="mb-1">{{ getTranslation('screenRegions') || 'Screen Regions' }}</h5>
+              <p class="text-muted mb-0 small">
+                {{ getTranslation('setupScreenRegions') || 'Select areas on the screen to create regions for different advertisements' }}
+              </p>
+            </div>
+            <div class="btn-group" *ngIf="screenRegions.length > 0">
+              <button class="btn btn-sm btn-outline-danger" (click)="resetAllRegions()" title="{{ getTranslation('resetRegions') || 'Reset All Regions' }}">
+                <i class="fas fa-redo me-1"></i>
+                {{ getTranslation('reset') || 'Reset' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Instructions -->
+          <div class="alert alert-info mb-3" *ngIf="screenRegions.length === 0">
+            <div class="d-flex align-items-start">
+              <i class="fas fa-info-circle me-2 mt-1"></i>
+              <div>
+                <strong>{{ getTranslation('howToUse') || 'How to use:' }}</strong>
+                <ul class="mb-0 mt-2 small">
+                  <li>{{ getTranslation('instruction1') || 'Click and drag on the screen preview below to select a custom area' }}</li>
+                  <li>{{ getTranslation('instruction2') || 'OR use the quick split buttons (Left/Right or Top/Bottom) to divide the screen automatically' }}</li>
+                  <li>{{ getTranslation('instruction3') || 'Click "Save Selected Region" after selecting an area' }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual Grid Preview -->
+          <div class="grid-preview-container mb-4" *ngIf="screenRegions.length > 0">
+            <h6 class="mb-3 text-white">
+              <i class="fas fa-th me-2"></i>
+              {{ getTranslation('createdRegions') || 'Created Regions' }} ({{ screenRegions.length }})
+              <small class="text-muted ms-2">Grid: {{ getGridColumns() }}×{{ getGridRows() }}</small>
+            </h6>
+            
+            <!-- Grid Display -->
+            <div class="grid-display">
+              <div class="grid-preview" 
+                   [style.grid-template-columns]="'repeat(' + getGridColumns() + ', 1fr)'"
+                   [style.grid-template-rows]="'repeat(' + getGridRows() + ', minmax(180px, 1fr))'"
+                   [attr.data-cols]="getGridColumns()"
+                   [attr.data-rows]="getGridRows()"
+                   [style.display]="'grid'"
+                   [style.grid-auto-flow]="'row'">
+                <div class="grid-cell" 
+                     *ngFor="let region of getSortedRegions(); let i = index"
+                     [class.selected]="selectedRegionForEdit?.id === region.id"
+                     (click)="selectRegionForEdit(region)"
+                     [attr.data-index]="i + 1"
+                     [style.background]="'transparent'"
+                     [style.border]="'2px solid #28a745'"
+                     [style.border-radius]="'8px'">
+                  <div class="grid-cell-content">
+                    <div class="grid-cell-number" 
+                         [style.font-size]="'28px'"
+                         [style.font-weight]="'700'"
+                         [style.color]="'#333333'">{{ i + 1 }} of {{ screenRegions.length }}</div>
+                    <button class="btn-remove-region" 
+                            (click)="deleteRegion(region.id); $event.stopPropagation()"
+                            title="{{ getTranslation('delete') || 'Delete' }}"
+                            [style.position]="'absolute'"
+                            [style.top]="'12px'"
+                            [style.right]="'12px'"
+                            [style.background]="'rgba(255, 255, 255, 0.95)'"
+                            [style.border]="'2px solid #dc3545'"
+                            [style.color]="'#dc3545'"
+                            [style.width]="'36px'"
+                            [style.height]="'36px'"
+                            [style.border-radius]="'8px'"
+                            [style.display]="'flex'"
+                            [style.align-items]="'center'"
+                            [style.justify-content]="'center'"
+                            [style.font-size]="'18px'"
+                            [style.font-weight]="'bold'"
+                            [style.cursor]="'pointer'">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid Layout Options -->
+          <div class="region-actions mb-3">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <div class="grid-options">
+                <label class="form-label mb-2"><strong>{{ getTranslation('selectGridLayout') || 'Select Grid Layout:' }}</strong></label>
+                <div class="btn-group d-flex flex-wrap gap-2" role="group">
+                  <!-- Full screen 1x1 layout -->
+                  <button type="button" class="btn btn-outline-primary" 
+                          (click)="createGridLayout(1, 1)"
+                          [disabled]="isSelectingRegion">
+                    <i class="fas fa-square me-1"></i>
+                    1×1 (Full)
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" 
+                          (click)="createGridLayout(1, 2)"
+                          [disabled]="isSelectingRegion">
+                    <i class="fas fa-columns me-1"></i>
+                    1×2 (Left/Right)
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" 
+                          (click)="createGridLayout(2, 1)"
+                          [disabled]="isSelectingRegion">
+                    <i class="fas fa-grip-lines me-1"></i>
+                    2×1 (Top/Bottom)
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" 
+                          (click)="createGridLayout(2, 2)"
+                          [disabled]="isSelectingRegion">
+                    <i class="fas fa-th me-1"></i>
+                    2×2 (4 Boxes)
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" 
+                          (click)="createGridLayout(2, 3)"
+                          [disabled]="isSelectingRegion">
+                    <i class="fas fa-th me-1"></i>
+                    2×3 (6 Boxes)
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" 
+                          (click)="createGridLayout(3, 2)"
+                          [disabled]="isSelectingRegion">
+                    <i class="fas fa-th me-1"></i>
+                    3×2 (6 Boxes)
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" 
+                          (click)="createGridLayout(3, 3)"
+                          [disabled]="isSelectingRegion">
+                    <i class="fas fa-th me-1"></i>
+                    3×3 (9 Boxes)
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" 
+                          (click)="createGridLayout(4, 4)"
+                          [disabled]="isSelectingRegion">
+                    <i class="fas fa-th me-1"></i>
+                    4×4 (16 Boxes)
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Selection Info -->
+              <div class="selection-info" *ngIf="pendingSelections.length > 0">
+                <span class="badge bg-info">
+                  <i class="fas fa-layer-group me-1"></i>
+                  {{ pendingSelections.length }} {{ getTranslation('regionsSelected') || 'region(s) selected' }}
+                </span>
+              </div>
+              
+              <button type="button" class="btn btn-success btn-lg" 
+                      *ngIf="pendingSelections.length > 0"
+                      (click)="saveAllPendingSelections()"
+                      [disabled]="isSelectingRegion">
+                <i class="fas fa-save me-1"></i>
+                {{ getTranslation('saveAllRegions') || 'Create All Regions' }} ({{ pendingSelections.length }})
+              </button>
+              
+              <button type="button" class="btn btn-outline-danger" 
+                      *ngIf="pendingSelections.length > 0"
+                      (click)="clearPendingSelections()"
+                      [disabled]="isSelectingRegion">
+                <i class="fas fa-times me-1"></i>
+                {{ getTranslation('clearSelections') || 'Clear All' }}
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Assigned Advertisements -->
+    <div class="card mb-4" *ngIf="selectedScreen && assignedAdvertisements.length > 0">
+      <div class="card-header bg-success text-white">
+        <h3 class="card-title">
+          <i class="fas fa-check-circle me-2"></i>
+          {{ getTranslation('assignedAdvertisements') || 'Assigned Advertisements' }}
+        </h3>
+      </div>
+      <div class="card-body">
+        <div *ngIf="isLoadingAssignedAds" class="text-center py-3">
+          <div class="spinner-border spinner-border-sm" role="status"></div>
+          {{ getTranslation('loading') || 'Loading...' }}
+        </div>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" *ngIf="!isLoadingAssignedAds && assignedAdvertisements.length">
+          <span class="text-muted small">
+            {{ getTranslation('assignedPlaylistHint') || 'Drag cards to set playback order. Set seconds per image slide, then save.' }}
+          </span>
+          <button
+            type="button"
+            class="btn btn-sm btn-success"
+            (click)="saveAssignedPlaylist()"
+            [disabled]="isSavingPlaylist">
+            <i class="fas fa-save me-1" *ngIf="!isSavingPlaylist"></i>
+            <span *ngIf="isSavingPlaylist" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            {{ getTranslation('saveOrderAndTiming') || 'Save order & slide timing' }}
+          </button>
+        </div>
+        <div class="row g-3" *ngIf="!isLoadingAssignedAds">
+          <div
+            class="col-md-6 col-lg-4"
+            *ngFor="let ad of assignedAdvertisements; let i = index"
+            draggable="true"
+            (dragstart)="onAssignedDragStart(i, $event)"
+            (dragover)="onAssignedDragOver($event)"
+            (drop)="onAssignedDrop(i, $event)">
+            <div class="advertisement-card assigned position-relative">
+              <div class="card h-100">
+                <button
+                  type="button"
+                  class="btn btn-sm border-0 position-absolute"
+                  style="top: -3px; right: 0px; z-index: 2; width: 30px; height: 30px; border-radius: 999px;  display: flex; align-items: center; justify-content: center;"
+                  (click)="onRemoveAssignedAdvertisement(ad.id!); $event.stopPropagation()"
+                  [title]="getTranslation('delete') || 'Delete'">
+                  <i class="fas fa-times" style="font-size: 18px; font-weight: 700; color: #dc3545;"></i>
+                </button>
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start gap-2 mb-2 assigned-ad-top-row">
+                    <div class="assigned-ad-main flex-grow-1 min-w-0">
+                      <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="text-muted" title="Drag to reorder" style="cursor: grab"><i class="fas fa-grip-vertical"></i></span>
+                        <h6 class="card-title mb-0">{{ ad.title }}</h6>
+                      </div>
+                      <p class="card-text text-muted small mt-1 mb-0" *ngIf="ad.description">
+                        {{ ad.description }}
+                      </p>
+                    </div>
+                    <div class="assigned-ad-header d-flex flex-column align-items-stretch">
+                      <span class="badge bg-success mb-2 align-self-end">
+                        <i class="fas fa-check me-1"></i>
+                        {{ getTranslation('assigned') || 'Assigned' }}
+                      </span>
+                      <div class="assigned-ad-thumb">
+                        <video
+                          *ngIf="showAssignedAdVideoPreview(ad)"
+                          [src]="resolveAdMediaUrl(ad.fileUrl)"
+                          muted
+                          playsinline
+                          preload="metadata"
+                        ></video>
+                        <img
+                          *ngIf="!showAssignedAdVideoPreview(ad) && showAssignedAdImagePreview(ad)"
+                          [src]="getAssignedAdPreviewUrl(ad)"
+                          [alt]="ad.title"
+                          loading="lazy"
+                        />
+                        <div
+                          class="assigned-ad-thumb-fallback"
+                          *ngIf="!showAssignedAdVideoPreview(ad) && !showAssignedAdImagePreview(ad)"
+                        >
+                          <i class="fas fa-file-powerpoint" *ngIf="ad.type === 'presentation'"></i>
+                          <i class="fas fa-file-pdf" *ngIf="ad.type === 'document'"></i>
+                          <i class="fas fa-file" *ngIf="ad.type !== 'presentation' && ad.type !== 'document'"></i>
+                        </div>
+                      </div>
+                      <div class="assigned-ad-meta">
+                        <div class="assigned-ad-badges">
+                          <span
+                            class="badge"
+                            [class.bg-success]="ad.status === 'active'"
+                            [class.bg-secondary]="ad.status === 'inactive'">
+                            {{ ad.status }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="mt-2 d-flex flex-wrap align-items-center gap-2"
+                    *ngIf="!showAssignedAdVideoPreview(ad)"
+                  >
+                    <label class="form-label small mb-0">{{ getTranslation('slideDurationSec') || 'Slide duration (sec)' }}</label>
+                    <input
+                      type="number"
+                      class="form-control form-control-sm"
+                      style="max-width: 5.5rem"
+                      min="1"
+                      max="600"
+                      [ngModel]="getSlideDurationSeconds(ad)"
+                      (ngModelChange)="onSlideDurationSecondsChange(ad, $event)"
+                    />
+                  </div>
+
+                  <!-- Region Assignment -->
+                  <div class="mt-2" *ngIf="screenRegions.length > 0">
+                    <label class="form-label small">{{ getTranslation('assignToRegion') || 'Assign to Region' }}</label>
+                    <select class="form-select form-select-sm"
+                            [ngModel]="getSelectedRegionIdForAd(ad.id!)"
+                            (ngModelChange)="onRegionSelectChange(ad.id!, $event)">
+                      <option value="">{{ getTranslation('noRegion') || 'No Region' }}</option>
+                      <option *ngFor="let region of screenRegions; let i = index" [value]="region.id">
+                        {{ (i + 1) }} of {{ screenRegions.length }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Schedule Info -->
+                  <div class="mt-2" *ngIf="getAdvertisementSchedule(ad.id!)">
+                    <div class="schedule-info p-2 bg-light rounded small">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span>
+                          <i class="fas fa-calendar-alt me-1"></i>
+                          {{ getTranslation('scheduled') || 'Scheduled' }}
+                        </span>
+                        <button class="btn btn-sm btn-link p-0" 
+                                (click)="openScheduleModal(ad.id!)"
+                                title="{{ getTranslation('editSchedule') || 'Edit Schedule' }}">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                      </div>
+                      <div class="mt-1 text-muted" *ngIf="getAdvertisementSchedule(ad.id!)?.startDate">
+                        {{ formatDateForInput(getAdvertisementSchedule(ad.id!)!.startDate) }}
+                        <span *ngIf="getAdvertisementSchedule(ad.id!)?.startTime">
+                          {{ getAdvertisementSchedule(ad.id!)!.startTime }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="mt-2 d-flex gap-2">
+                    <button 
+                      class="btn btn-sm btn-primary flex-fill"
+                      (click)="selectAdvertisement(ad); $event.stopPropagation()">
+                      <i class="fas fa-play me-1"></i>
+                      {{ getTranslation('View') || 'View' }}
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-secondary"
+                      (click)="openScheduleModal(ad.id!); $event.stopPropagation()"
+                      title="{{ getTranslation('schedule') || 'Schedule' }}">
+                      <i class="fas fa-calendar-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div class="modal fade" [class.show]="showScheduleModal" [style.display]="showScheduleModal ? 'block' : 'none'" 
+         *ngIf="showScheduleModal && editingScheduleAdId" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-calendar-alt me-2"></i>
+              {{ getTranslation('advertisementSchedule') || 'Advertisement Schedule' }}
+            </h5>
+            <button type="button" class="btn-close" (click)="closeScheduleModal()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form #scheduleForm="ngForm">
+              <!-- Region Selection -->
+              <div class="mb-3" *ngIf="screenRegions.length > 0">
+                <label class="form-label">{{ getTranslation('assignToRegion') || 'Assign to Region' }}</label>
+                <select class="form-select" name="regionId" 
+                        [(ngModel)]="scheduleFormData.regionId">
+                  <option [value]="null">{{ getTranslation('noRegion') || 'No Region' }}</option>
+                  <option *ngFor="let region of screenRegions; let i = index" [value]="region.id">
+                    {{ (i + 1) }} of {{ screenRegions.length }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Start Date/Time -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">{{ getTranslation('startDate') || 'Start Date' }}</label>
+                  <input type="date" class="form-control" name="startDate"
+                         [(ngModel)]="scheduleFormData.startDate">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">{{ getTranslation('startTime') || 'Start Time' }}</label>
+                  <input type="time" class="form-control" name="startTime"
+                         [(ngModel)]="scheduleFormData.startTime">
+                </div>
+              </div>
+
+              <!-- End Date/Time -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">{{ getTranslation('endDate') || 'End Date' }}</label>
+                  <input type="date" class="form-control" name="endDate"
+                         [(ngModel)]="scheduleFormData.endDate">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">{{ getTranslation('endTime') || 'End Time' }}</label>
+                  <input type="time" class="form-control" name="endTime"
+                         [(ngModel)]="scheduleFormData.endTime">
+                </div>
+              </div>
+
+              <!-- Priority -->
+              <div class="mb-3">
+                <label class="form-label">{{ getTranslation('priority') || 'Priority' }}</label>
+                <input type="number" class="form-control" name="priority" min="0" max="100"
+                       [(ngModel)]="scheduleFormData.priority">
+                <small class="form-text text-muted">
+                  {{ getTranslation('priorityHint') || 'Higher priority advertisements will play first' }}
+                </small>
+              </div>
+
+              <!-- Active Status -->
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="isActive" id="isActive"
+                         [(ngModel)]="scheduleFormData.isActive">
+                  <label class="form-check-label" for="isActive">
+                    {{ getTranslation('active') || 'Active' }}
+                  </label>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeScheduleModal()">
+              {{ getTranslation('cancel') || 'Cancel' }}
+            </button>
+            <button type="button" class="btn btn-danger" 
+                    *ngIf="getAdvertisementSchedule(editingScheduleAdId!)"
+                    (click)="deleteAdvertisementSchedule(editingScheduleAdId!); closeScheduleModal()">
+              <i class="fas fa-trash me-1"></i>
+              {{ getTranslation('delete') || 'Delete' }}
+            </button>
+            <button type="button" class="btn btn-primary" (click)="saveAdvertisementSchedule(scheduleFormData)">
+              <i class="fas fa-save me-1"></i>
+              {{ getTranslation('save') || 'Save' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade" [class.show]="showScheduleModal" *ngIf="showScheduleModal"></div>
+
+    <!-- Screen Settings (only after a screen is selected) -->
+    <div class="card mb-4" *ngIf="selectedScreen">
+      <div class="card-header">
+        <h3 class="card-title">{{ getTranslation('screenSettings') || 'Screen Settings' }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="orientation" class="form-label">
+              {{ getTranslation('orientation') || 'Orientation' }}
+            </label>
+            <select 
+              id="orientation"
+              class="form-select" 
+              [(ngModel)]="orientation"
+              [disabled]="!selectedScreen || isLoading">
+              <option value="landscape">{{ getTranslation('landscape') || 'Landscape' }}</option>
+              <option value="portrait">{{ getTranslation('portrait') || 'Portrait' }}</option>
+              <option value="auto">{{ getTranslation('auto') || 'Auto' }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="screenSize" class="form-label">
+              {{ getTranslation('screenSize') || 'Screen Size' }}
+            </label>
+            <select 
+              id="screenSize"
+              class="form-select" 
+              [(ngModel)]="screenSize"
+              [disabled]="!selectedScreen || isLoading">
+              <option value="small">{{ getTranslation('small') || 'Small' }}</option>
+              <option value="medium">{{ getTranslation('medium') || 'Medium' }}</option>
+              <option value="large">{{ getTranslation('large') || 'Large' }}</option>
+              <option value="custom">{{ getTranslation('custom') || 'Custom' }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Custom Screen Dimensions (shown when custom is selected) -->
+        <div class="row" *ngIf="screenSize === 'custom'">
+          <div class="col-md-6 mb-3">
+            <label for="screenWidth" class="form-label">
+              {{ getTranslation('screenWidth') || 'Screen Width (px)' }}
+            </label>
+            <input
+              type="number"
+              id="screenWidth"
+              class="form-control"
+              [(ngModel)]="screenWidth"
+              placeholder="e.g., 1024"
+              min="1"
+              [disabled]="!selectedScreen || isLoading">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="screenHeight" class="form-label">
+              {{ getTranslation('screenHeight') || 'Screen Height (px)' }}
+            </label>
+            <input
+              type="number"
+              id="screenHeight"
+              class="form-control"
+              [(ngModel)]="screenHeight"
+              placeholder="e.g., 245"
+              min="1"
+              [disabled]="!selectedScreen || isLoading">
+          </div>
+          <div class="col-12 mb-3">
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              {{ getTranslation('enterCustomDimensions') || 'Enter custom screen dimensions in pixels (e.g., 1024 x 245)' }}
+            </small>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <button 
+            class="btn btn-primary"
+            (click)="updateScreenSettings()"
+            [disabled]="!selectedScreen || isLoading">
+            <i class="fas fa-save me-2"></i>
+            {{ getTranslation('saveSettings') || 'Save Settings' }}
+          </button>
+          <button 
+            type="button"
+            class="btn btn-outline-primary"
+            (click)="refreshPlayer()"
+            [disabled]="!selectedScreen || isRefreshingPlayer">
+            <span *ngIf="isRefreshingPlayer" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <i class="fas fa-sync-alt me-1"></i>
+            {{ getTranslation('refreshPlayer') || 'Refresh player' }}
+          </button>
+          <button 
+            *ngIf="selectedScreen && selectedScreen.groupId"
+            type="button"
+            class="btn btn-success"
+            (click)="applyToGroup()"
+            [disabled]="!selectedScreen || isApplyingToGroup"
+            [title]="getTranslation('applyToGroup') || 'Apply current layout and content to all screens in this group'">
+            <span *ngIf="isApplyingToGroup" class="spinner-border spinner-border-sm me-1" role="status"></span>
+            <i class="fas fa-object-group me-1"></i>
+            {{ getTranslation('applyToGroup') || 'Save & apply to this group' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- By Group tab: self-contained (regions, assign ads, settings, apply) -->
+  <div class="content-wrapper" *ngIf="activePlaybackTab === 1">
+    <app-group-layout></app-group-layout>
+  </div>
+
+  <!-- Advertisement Details Modal -->
+  <div 
+    class="modal fade" 
+    [class.show]="showAdvertisementModal"
+    [style.display]="showAdvertisementModal ? 'block' : 'none'"
+    tabindex="-1"
+    role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            {{ getTranslation('advertisementDetails') || 'Advertisement Details' }}
+          </h5>
+          <button 
+            type="button" 
+            class="btn-close" 
+            (click)="closeAdvertisementModal()"
+            aria-label="Close">
+          </button>
+        </div>
+        <div class="modal-body" *ngIf="selectedAdvertisement">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="info-item mb-3">
+                <strong>{{ getTranslation('title') || 'Title' }}:</strong>
+                <p>{{ selectedAdvertisement.title }}</p>
+              </div>
+              <div class="info-item mb-3" *ngIf="selectedAdvertisement.description">
+                <strong>{{ getTranslation('description') || 'Description' }}:</strong>
+                <p>{{ selectedAdvertisement.description }}</p>
+              </div>
+              <div class="info-item mb-3">
+                <strong>{{ getTranslation('type') || 'Type' }}:</strong>
+                <span class="badge bg-info">{{ selectedAdvertisement.type }}</span>
+              </div>
+              <div class="info-item mb-3">
+                <strong>{{ getTranslation('status') || 'Status' }}:</strong>
+                <span class="badge" 
+                  [class.bg-success]="selectedAdvertisement.status === 'active'"
+                  [class.bg-secondary]="selectedAdvertisement.status === 'inactive'"
+                  [class.bg-warning]="selectedAdvertisement.status === 'draft'"
+                  [class.bg-danger]="selectedAdvertisement.status === 'expired'">
+                  {{ selectedAdvertisement.status }}
+                </span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="info-item mb-3">
+                <strong>{{ getTranslation('videoUrl') || 'Video URL' }}:</strong>
+                <p class="text-break small">
+                  <a
+                    [href]="selectedAdvertisement.fileUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {{ selectedAdvertisement.fileUrl }}
+                  </a>
+                </p>
+              </div>
+              <div class="info-item mb-3">
+                <strong>{{ getTranslation('fileName') || 'File Name' }}:</strong>
+                <p>{{ decodeFileNameForDisplay(selectedAdvertisement.fileName) }}</p>
+              </div>
+              <div class="info-item mb-3">
+                <strong>{{ getTranslation('fileSize') || 'File Size' }}:</strong>
+                <p>{{ formatFileSize(selectedAdvertisement.fileSize) }}</p>
+              </div>
+              <div class="info-item mb-3">
+                <strong>{{ getTranslation('mimeType') || 'MIME Type' }}:</strong>
+                <p>{{ selectedAdvertisement.mimeType }}</p>
+              </div>
+              <div class="info-item mb-3" *ngIf="selectedAdvertisement.thumbnailUrl">
+                <strong>{{ getTranslation('thumbnail') || 'Thumbnail' }}:</strong>
+                <img [src]="selectedAdvertisement.thumbnailUrl" class="img-thumbnail" style="max-width: 200px;">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer d-flex justify-content-between align-items-center">
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="muteToggle"
+                   [(ngModel)]="isMuted">
+            <label class="form-check-label" for="muteToggle">
+              {{ getTranslation('muteAudio') || 'Mute audio on screen' }}
+            </label>
+          </div>
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="closeAdvertisementModal()">
+            {{ getTranslation('cancel') || 'Cancel' }}
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            (click)="confirmPlayAdvertisement()"
+            [disabled]="!selectedScreen">
+            <i class="fas fa-play me-2"></i>
+            {{ getTranslation('playOnScreen') || 'Play on Screen' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div 
+    class="modal-backdrop fade" 
+    [class.show]="showAdvertisementModal"
+    [style.display]="showAdvertisementModal ? 'block' : 'none'"
+    (click)="closeAdvertisementModal()">
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">{{ getTranslation('loading') || 'Loading...' }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Dialog -->
+<app-alert-dialog 
+  [visible]="showAlertDialog"
+  [data]="alertDialogData"
+  (closed)="closeAlertDialog()">
+</app-alert-dialog>
+
+<!-- Confirm Dialog -->
+<app-confirm-dialog 
+  [visible]="showConfirmDialog"
+  [data]="confirmDialogData"
+  (confirmed)="onConfirmDialogConfirmed()"
+  (cancelled)="onConfirmDialogCancelled()">
+</app-confirm-dialog>
+

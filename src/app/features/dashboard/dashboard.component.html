@@ -1,0 +1,221 @@
+<div class="dashboard" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ getTranslation('loading') || 'Loading...' }}</p>
+  </div>
+
+  <!-- Page Header -->
+  <div class="dashboard-header">
+    <h1 class="dashboard-title">
+      <i class="fas fa-tachometer-alt"></i>
+      {{ getTranslation('dashboard') || 'Dashboard' }}
+    </h1>
+    <p class="dashboard-subtitle">{{ getTranslation('dashboardOverview') || 'Complete overview of your system' }}</p>
+  </div>
+
+  <!-- Metric Cards Section -->
+  <div class="metrics-section">
+    <h2 class="section-title">
+      <i class="fas fa-chart-bar"></i>
+      {{ getTranslation('statistics') || 'Statistics' }}
+    </h2>
+    <div class="metrics-grid">
+      <div 
+        class="metric-card" 
+        *ngFor="let card of metricCards" 
+        [style.border-left-color]="card.color"
+        [class.clickable]="card.route"
+        (click)="navigateTo(card.route)">
+        <div class="metric-icon" [style.color]="card.color">
+          <i [class]="card.icon"></i>
+        </div>
+        <div class="metric-content">
+          <div class="metric-value">{{ card.value }}</div>
+          <div class="metric-label">{{ getTranslation(card.id) }}</div>
+        </div>
+        <div class="metric-arrow" *ngIf="card.route">
+          <i class="fas fa-chevron-right"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="dashboard-grid">
+    <!-- Recent Screens Section -->
+    <div class="dashboard-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-tv"></i>
+          {{ getTranslation('recentScreens') || 'Recent Screens' }}
+        </h3>
+        <a [routerLink]="['/screens/list']" class="view-all-link">
+          {{ getTranslation('viewAll') || 'View All' }}
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      <div class="card-content">
+        <div *ngIf="recentScreens.length === 0" class="empty-state">
+          <i class="fas fa-tv"></i>
+          <p>{{ getTranslation('noScreens') || 'No screens found' }}</p>
+        </div>
+        <div class="items-list" *ngIf="recentScreens.length > 0">
+          <div class="item-row" *ngFor="let screen of recentScreens" [routerLink]="['/screens/create', { edit: screen.id }]">
+            <div class="item-info">
+              <div class="item-name">{{ screen.name }}</div>
+              <div class="item-meta">
+                <span class="item-badge" [class]="getScreenStatusClass(screen.status)">
+                  {{ screen.status }}
+                </span>
+                <span class="item-date" *ngIf="screen.lastConnected">
+                  {{ getTranslation('lastConnected') || 'Last connected' }}: {{ formatDate(screen.lastConnected) }}
+                </span>
+              </div>
+            </div>
+            <div class="item-action">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Advertisements Section -->
+    <div class="dashboard-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-bullhorn"></i>
+          {{ getTranslation('recentAdvertisements') || 'Recent Advertisements' }}
+        </h3>
+        <a [routerLink]="['/advertisements/advertisements']" class="view-all-link">
+          {{ getTranslation('viewAll') || 'View All' }}
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      <div class="card-content">
+        <div *ngIf="recentAdvertisements.length === 0" class="empty-state">
+          <i class="fas fa-bullhorn"></i>
+          <p>{{ getTranslation('noAdvertisements') || 'No advertisements found' }}</p>
+        </div>
+        <div class="items-list" *ngIf="recentAdvertisements.length > 0">
+          <div class="item-row" *ngFor="let ad of recentAdvertisements" [routerLink]="['/advertisements/advertisements', { edit: ad.id }]">
+            <div class="item-info">
+              <div class="item-name">{{ ad.title }}</div>
+              <div class="item-meta">
+                <span class="item-badge" [class]="getAdvertisementStatusClass(ad.status)">
+                  {{ ad.status }}
+                </span>
+                <span class="item-type">{{ ad.type }}</span>
+                <span class="item-date" *ngIf="ad.updatedAt">
+                  {{ formatDate(ad.updatedAt) }}
+                </span>
+              </div>
+            </div>
+            <div class="item-action">
+              <i class="fas fa-chevron-right"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Status Section -->
+    <div class="dashboard-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-server"></i>
+          {{ getTranslation('systemStatus') || 'System Status' }}
+        </h3>
+      </div>
+      <div class="card-content">
+        <div class="status-list">
+          <div class="status-item">
+            <div class="status-label">
+              <i class="fas fa-tv"></i>
+              {{ getTranslation('screens') || 'Screens' }}
+            </div>
+            <div class="status-value">
+              <span class="status-online">{{ onlineScreens }} {{ getTranslation('online') || 'Online' }}</span>
+              <span class="status-offline">{{ offlineScreens }} {{ getTranslation('offline') || 'Offline' }}</span>
+            </div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">
+              <i class="fas fa-bullhorn"></i>
+              {{ getTranslation('advertisements') || 'Advertisements' }}
+            </div>
+            <div class="status-value">
+              <span class="status-active">{{ activeAdvertisements }} {{ getTranslation('active') || 'Active' }}</span>
+              <span class="status-draft">{{ draftAdvertisements }} {{ getTranslation('draft') || 'Draft' }}</span>
+            </div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">
+              <i class="fas fa-map-marker-alt"></i>
+              {{ getTranslation('locations') || 'Locations' }}
+            </div>
+            <div class="status-value">
+              <span class="status-active">{{ activeLocations }} {{ getTranslation('active') || 'Active' }}</span>
+            </div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">
+              <i class="fas fa-users"></i>
+              {{ getTranslation('users') || 'Users' }}
+            </div>
+            <div class="status-value">
+              <span class="status-active">{{ activeUsers }} {{ getTranslation('active') || 'Active' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="dashboard-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-bolt"></i>
+          {{ getTranslation('quickActions') || 'Quick Actions' }}
+        </h3>
+      </div>
+      <div class="card-content">
+        <div class="actions-grid">
+          <a [routerLink]="['/screens/create']" class="action-item">
+            <i class="fas fa-plus-circle"></i>
+            <span>{{ getTranslation('addScreen') || 'Add Screen' }}</span>
+          </a>
+          <a [routerLink]="['/advertisements/advertisements']" class="action-item">
+            <i class="fas fa-bullhorn"></i>
+            <span>{{ getTranslation('addAdvertisement') || 'Add Advertisement' }}</span>
+          </a>
+          <a [routerLink]="['/screens/discover']" class="action-item">
+            <i class="fas fa-search"></i>
+            <span>{{ getTranslation('scanDevices') || 'Scan Devices' }}</span>
+          </a>
+          <a [routerLink]="['/screens/playback']" class="action-item">
+            <i class="fas fa-play-circle"></i>
+            <span>{{ getTranslation('playbackControl') || 'Playback Control' }}</span>
+          </a>
+          <a [routerLink]="['/notifications/notifications']" class="action-item">
+            <i class="fas fa-bell"></i>
+            <span>{{ getTranslation('sendNotification') || 'Send Notification' }}</span>
+          </a>
+          <a [routerLink]="['/locations']" class="action-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>{{ getTranslation('manageLocations') || 'Manage Locations' }}</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- News Section -->
+  <div class="news-section">
+    <div class="news-message">
+      <i class="fas fa-info-circle news-icon"></i>
+      <span>{{ getTranslation('noNews') }}</span>
+    </div>
+  </div>
+</div>

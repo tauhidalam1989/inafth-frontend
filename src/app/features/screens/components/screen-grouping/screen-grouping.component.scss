@@ -1,0 +1,227 @@
+.screen-grouping-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+
+  &[dir="rtl"] {
+    .page-title {
+      text-align: right;
+    }
+  }
+
+  .page-title {
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 1.5rem;
+    margin-bottom: 0;
+    
+    i {
+      color: #00695c;
+      background: linear-gradient(135deg, #00695c, #4db6ac);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  .card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+    height: 100%;
+
+    .card-header {
+      border-radius: 15px 15px 0 0;
+      padding: 15px 20px;
+      font-weight: 600;
+
+      &.bg-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #5bc0de 100%);
+      }
+
+      &.bg-primary {
+        background: linear-gradient(135deg, #00695c 0%, #4db6ac 100%);
+      }
+
+      h5, h6 {
+        margin: 0;
+        font-size: 1rem;
+      }
+    }
+
+    .card-body {
+      padding: 20px;
+      min-height: 200px;
+    }
+  }
+
+  .screens-list {
+    min-height: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .group-drop-zone {
+    min-height: 300px;
+    padding: 16px;
+    border: 2px dashed #e9ecef;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: #fafbfc;
+
+    &.drag-over {
+      border-color: #00695c;
+      background: rgba(0, 105, 92, 0.05);
+      border-style: solid;
+    }
+  }
+
+  .screen-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: move;
+    transition: all 0.3s ease;
+    user-select: none;
+
+    &:hover {
+      border-color: #00695c;
+      box-shadow: 0 4px 12px rgba(0, 105, 92, 0.15);
+      transform: translateX(4px);
+    }
+
+    &.dragging {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+
+    i.fa-grip-vertical {
+      color: #6c757d;
+      margin-right: 8px;
+      cursor: grab;
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+
+    .btn-danger {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #dc3545 0%, #e4606d 100%);
+      border: none;
+      color: white;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  .group-card {
+    .card-header {
+      .group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px; // Add spacing between group name and delete button
+        width: 100%;
+
+        .group-name {
+          flex: 1;
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          min-width: 0; // Allow text truncation if needed
+        }
+
+        .edit-group-btn {
+          padding: 6px 10px;
+          font-size: 0.75rem;
+          border-radius: 6px;
+          color: #0d6efd;
+          flex-shrink: 0;
+          transition: all 0.2s ease;
+          &:hover {
+            background: rgba(255, 255, 255, 0.9);
+          }
+        }
+
+        .delete-group-btn {
+          padding: 6px 12px;
+          font-size: 0.75rem;
+          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          flex-shrink: 0; // Prevent button from shrinking
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+          }
+        }
+      }
+    }
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+  }
+
+  .modal {
+    .modal-dialog {
+      .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+
+        .modal-header {
+          border-radius: 15px 15px 0 0;
+          padding: 20px;
+
+          .modal-title {
+            font-weight: 700;
+            font-size: 1.25rem;
+          }
+        }
+
+        .modal-body {
+          padding: 24px;
+
+          .form-control {
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+
+            &:focus {
+              border-color: #00695c;
+              box-shadow: 0 0 0 3px rgba(0, 105, 92, 0.1);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

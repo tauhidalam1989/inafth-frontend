@@ -1,0 +1,205 @@
+<div class="system-logs-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-file-alt"></i>
+        {{ getTranslation('systemLogs') }}
+      </h1>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="search-filter">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (input)="filterLogs()"
+            [placeholder]="getTranslation('searchLogs')"
+            class="form-control">
+        </div>
+      </div>
+      <div class="level-filter">
+        <select [(ngModel)]="selectedLevel" (change)="filterLogs()" class="form-control">
+          <option value="all">{{ getTranslation('allLevels') }}</option>
+          <option value="info">{{ getTranslation('info') }}</option>
+          <option value="warning">{{ getTranslation('warning') }}</option>
+          <option value="error">{{ getTranslation('error') }}</option>
+          <option value="success">{{ getTranslation('success') }}</option>
+          <option value="debug">{{ getTranslation('debug') }}</option>
+        </select>
+      </div>
+      <div class="module-filter">
+        <select [(ngModel)]="selectedModule" (change)="filterLogs()" class="form-control">
+          <option value="all">{{ getTranslation('allModules') }}</option>
+          <option *ngFor="let module of availableModules" [value]="module">{{ module }}</option>
+        </select>
+      </div>
+      <div class="action-filter">
+        <select [(ngModel)]="selectedAction" (change)="filterLogs()" class="form-control">
+          <option value="all">{{ getTranslation('allActions') }}</option>
+          <option *ngFor="let action of availableActions" [value]="action">{{ action }}</option>
+        </select>
+      </div>
+      <div class="date-filter">
+        <input 
+          type="date" 
+          [(ngModel)]="startDate" 
+          (change)="filterLogs()"
+          class="form-control"
+          [placeholder]="getTranslation('startDate')">
+      </div>
+      <div class="date-filter">
+        <input 
+          type="date" 
+          [(ngModel)]="endDate" 
+          (change)="filterLogs()"
+          class="form-control"
+          [placeholder]="getTranslation('endDate')">
+      </div>
+    </div>
+  </div>
+
+  <!-- Logs List Section -->
+  <div class="logs-list-section">
+    <div class="list-header">
+      <div class="total-count">
+        <i class="fas fa-list me-2"></i>
+        {{ getTranslation('totalLogs') }}: {{ filteredLogs.length }}
+      </div>
+      <div class="level-summary">
+        <span class="level-item info">{{ getTranslation('info') }}: {{ getLevelCount('info') }}</span>
+        <span class="level-item warning">{{ getTranslation('warning') }}: {{ getLevelCount('warning') }}</span>
+        <span class="level-item error">{{ getTranslation('error') }}: {{ getLevelCount('error') }}</span>
+        <span class="level-item success">{{ getTranslation('success') }}: {{ getLevelCount('success') }}</span>
+        <span class="level-item debug">{{ getTranslation('debug') }}: {{ getLevelCount('debug') }}</span>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>{{ getTranslation('level') }}</th>
+            <th>{{ getTranslation('module') }}</th>
+            <th>{{ getTranslation('action') }}</th>
+            <th>{{ getTranslation('message') }}</th>
+            <th>{{ getTranslation('user') }}</th>
+            <th>{{ getTranslation('ipAddress') }}</th>
+            <th>{{ getTranslation('date') }}</th>
+            <th>{{ getTranslation('actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of filteredLogs" [class]="log.level">
+            <td class="level-cell">
+              <span class="level-badge" [class]="log.level">
+                <i class="fas" [class]="getLevelIcon(log.level)"></i>
+                {{ getLevelDisplayName(log.level) }}
+              </span>
+            </td>
+            <td class="module-cell">
+              <span class="module-badge">{{ log.module }}</span>
+            </td>
+            <td class="action-cell">
+              <span class="action-badge">{{ log.action }}</span>
+            </td>
+            <td class="message-cell">
+              <div class="log-message">
+                {{ log.message }}
+                <div class="log-details" *ngIf="log.details">
+                  <small class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    {{ getTranslation('viewDetails') }}
+                  </small>
+                </div>
+              </div>
+            </td>
+            <td class="user-cell">
+              <div class="user-info" *ngIf="log.userName">
+                <i class="fas fa-user"></i>
+                {{ log.userName }}
+              </div>
+              <span *ngIf="!log.userName" class="text-muted">-</span>
+            </td>
+            <td class="ip-cell">
+              <div class="ip-info" *ngIf="log.ipAddress">
+                <i class="fas fa-network-wired"></i>
+                {{ log.ipAddress }}
+              </div>
+              <span *ngIf="!log.ipAddress" class="text-muted">-</span>
+            </td>
+            <td class="date-cell">
+              <div class="date-info">
+                <i class="fas fa-clock"></i>
+                <span>{{ log.createdAt | date:'short' }}</span>
+              </div>
+            </td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button 
+                  class="btn btn-sm btn-outline-danger" 
+                  (click)="deleteLog(log)" 
+                  [title]="getTranslation('delete')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredLogs.length === 0 && !isLoading" class="empty-state">
+        <i class="fas fa-file-alt"></i>
+        <p>{{ getTranslation('noLogsFound') }}</p>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="empty-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>{{ getTranslation('loading') }}</p>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ errorMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section" *ngIf="totalPages > 1">
+    <nav aria-label="Logs pagination">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" (click)="onPageChange(currentPage - 1)" [attr.aria-disabled]="currentPage === 1">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+        </li>
+        <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index" [class.active]="currentPage === i + 1">
+          <a class="page-link" (click)="onPageChange(i + 1)">{{ i + 1 }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" (click)="onPageChange(currentPage + 1)" [attr.aria-disabled]="currentPage === totalPages">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Confirm Delete Dialog -->
+  <app-confirm-dialog
+    [visible]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="onCancelDelete()"
+  ></app-confirm-dialog>
+</div>
+

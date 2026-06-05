@@ -1,0 +1,373 @@
+<div class="screen-create-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="page-title">
+            <i class="fas fa-plus-circle me-2"></i>
+            {{ getTranslation('createScreen') || 'Create Screen' }}
+          </h2>
+          <a routerLink="/screens/list" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            {{ getTranslation('backToList') || 'Back to List' }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="row mb-3" *ngIf="showSuccessMessage">
+      <div class="col-12">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="fas fa-check-circle me-2"></i>
+          {{ successMessage }}
+          <button type="button" class="btn-close" (click)="showSuccessMessage = false"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Screen Form -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-plus-circle me-2"></i>
+              {{ getTranslation('addManualScreen') || 'Add Manual Screen' }}
+            </h5>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="manualForm" (ngSubmit)="saveScreen()">
+              <!-- Basic Information -->
+              <div class="form-section mb-4">
+                <h6 class="section-title">
+                  <i class="fas fa-info-circle me-2"></i>
+                  {{ getTranslation('basicInformation') || 'Basic Information' }}
+                </h6>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">
+                      {{ getTranslation('screenName') || 'Screen Name' }} <span class="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      formControlName="name"
+                      [class.is-invalid]="manualForm.get('name')?.invalid && manualForm.get('name')?.touched"
+                      [placeholder]="getTranslation('enterScreenName') || 'Enter screen name'"
+                    />
+                    <div class="invalid-feedback" *ngIf="manualForm.get('name')?.invalid && manualForm.get('name')?.touched">
+                      {{ getTranslation('screenNameRequired') || 'Screen name is required' }}
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">{{ getTranslation('ipAddress') || 'IP Address' }}</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      formControlName="ipAddress"
+                      placeholder="192.168.1.100"
+                    />
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">{{ getTranslation('macAddress') || 'MAC Address' }}</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      formControlName="macAddress"
+                      placeholder="00:00:00:00:00:00"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Screen Group -->
+            <div class="form-section mb-4">
+              <h6 class="section-title">
+                <i class="fas fa-layer-group me-2"></i>
+                {{ getTranslation('screenGroup') || 'Screen Group' }}
+              </h6>
+              <div class="selection-cards">
+                <div class="selection-card" [class.dropdown-open]="showGroupDropdown">
+                  <label class="card-label">{{ getTranslation('group') || 'Group' }}</label>
+                  <div class="card-content" [class.selected]="selectedGroup" (click)="openGroupSelector(); $event.stopPropagation()">
+                    {{ selectedGroup ? selectedGroup.name : (getTranslation('nothingSelected') || 'Nothing Selected') }}
+                  </div>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openGroupSelector(); $event.stopPropagation()">
+                    <i class="fas fa-chevron-down" [class.rotated]="showGroupDropdown"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-success btn-sm ms-2" (click)="openCreateGroupModal(); $event.stopPropagation()">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                  <div class="dropdown-menu" *ngIf="showGroupDropdown" (click)="$event.stopPropagation()">
+                    <div class="dropdown-item" *ngFor="let group of availableGroups" (click)="selectGroup(group); $event.stopPropagation()">
+                      {{ group.name }}
+                    </div>
+                    <div class="dropdown-item" *ngIf="availableGroups.length === 0">
+                      {{ getTranslation('noGroupsAvailable') || 'No groups available' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Location Selection -->
+            <div class="form-section mb-4">
+              <h6 class="section-title">
+                <i class="fas fa-map-marker-alt me-2"></i>
+                {{ getTranslation('locationAssignment') || 'Location Assignment' }}
+              </h6>
+              <div class="selection-cards">
+                <div class="selection-card" [class.dropdown-open]="showSubsiteDropdown">
+                  <label class="card-label">{{ getTranslation('subsites') || 'Subsite' }}</label>
+                  <div class="card-content" [class.selected]="selectedSubsite" (click)="openSubsiteSelector(); $event.stopPropagation()">
+                    {{ selectedSubsite ? selectedSubsite.name : (getTranslation('nothingSelected') || 'Nothing Selected') }}
+                  </div>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openSubsiteSelector(); $event.stopPropagation()">
+                    <i class="fas fa-chevron-down" [class.rotated]="showSubsiteDropdown"></i>
+                  </button>
+                  <div class="dropdown-menu" *ngIf="showSubsiteDropdown" (click)="$event.stopPropagation()">
+                    <div class="dropdown-item" *ngFor="let subsite of availableSubsites" (click)="selectSubsite(subsite); $event.stopPropagation()">
+                      {{ subsite.name }}
+                    </div>
+                    <div class="dropdown-item" *ngIf="availableSubsites.length === 0">
+                      {{ getTranslation('noSubsitesAvailable') || 'No subsites available' }}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="selection-card">
+                  <label class="card-label">{{ getTranslation('sections') || 'Section' }}</label>
+                  <div class="card-content" [class.selected]="selectedSection" (click)="openSectionSelector(); $event.stopPropagation()">
+                    {{ selectedSection ? selectedSection.name : (getTranslation('nothingSelected') || 'Nothing Selected') }}
+                  </div>
+                  <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!selectedSubsite" (click)="openSectionSelector(); $event.stopPropagation()">
+                    <i class="fas fa-chevron-down" [class.rotated]="showSectionDropdown"></i>
+                  </button>
+                  <div class="dropdown-menu" *ngIf="showSectionDropdown" (click)="$event.stopPropagation()">
+                    <div class="dropdown-item" *ngFor="let section of availableSections" (click)="selectSection(section); $event.stopPropagation()">
+                      {{ section.name }}
+                    </div>
+                    <div class="dropdown-item" *ngIf="availableSections.length === 0">
+                      {{ getTranslation('noSectionsAvailable') || 'No sections available' }}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- <div class="selection-card" [class.dropdown-open]="showSpecialDivisionDropdown">
+                  <label class="card-label">{{ getTranslation('specialDivisions') || 'Special Division' }}</label>
+                  <div class="card-content" [class.selected]="selectedSpecialDivision" (click)="openSpecialDivisionSelector(); $event.stopPropagation()">
+                    {{ selectedSpecialDivision ? selectedSpecialDivision.name : (getTranslation('nothingSelected') || 'Nothing Selected') }}
+                  </div>
+                  <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!selectedSection" (click)="openSpecialDivisionSelector(); $event.stopPropagation()">
+                    <i class="fas fa-chevron-down" [class.rotated]="showSpecialDivisionDropdown"></i>
+                  </button>
+                  <div class="dropdown-menu" *ngIf="showSpecialDivisionDropdown" (click)="$event.stopPropagation()">
+                    <div class="dropdown-item" *ngFor="let division of availableSpecialDivisions" (click)="selectSpecialDivision(division); $event.stopPropagation()">
+                      {{ division.name }}
+                    </div>
+                    <div class="dropdown-item" *ngIf="availableSpecialDivisions.length === 0">
+                      {{ getTranslation('noSpecialDivisionsAvailable') || 'No special divisions available' }}
+                    </div>
+                  </div>
+                </div> -->
+              </div>
+            </div>
+
+            <!-- User Assignment -->
+            <div class="form-section mb-4">
+              <h6 class="section-title">
+                <i class="fas fa-user me-2"></i>
+                {{ getTranslation('userAssignment') || 'User Assignment' }}
+              </h6>
+              <div class="selection-cards">
+                <div class="selection-card" [class.dropdown-open]="showUserDropdown">
+                  <label class="card-label">{{ getTranslation('assignedUser') || 'Assigned User' }}</label>
+                  <div class="card-content" (click)="openUserSelector(); $event.stopPropagation()">
+                    {{ selectedUserIds.length > 0 ? (selectedUserIds.length + ' ' + (getTranslation('selected') || 'selected')) : (getTranslation('nothingSelected') || 'Nothing Selected') }}
+                  </div>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openUserSelector(); $event.stopPropagation()">
+                    <i class="fas fa-chevron-down" [class.rotated]="showUserDropdown"></i>
+                  </button>
+                  <div class="dropdown-menu" *ngIf="showUserDropdown" (click)="$event.stopPropagation()">
+                    <div class="dropdown-item checkbox-item" *ngFor="let user of availableUsers" (click)="toggleUser(user.id!); $event.stopPropagation()">
+                      <input type="checkbox" [checked]="isUserSelected(user.id!)" (change)="toggleUser(user.id!)">
+                      <span>{{ user.username }}</span>
+                    </div>
+                    <div class="dropdown-item" *ngIf="availableUsers.length === 0">
+                      {{ getTranslation('noUsersAvailable') || 'No users available' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Advertisement Selection -->
+            <div class="form-section mb-4">
+              <h6 class="section-title">
+                <i class="fas fa-ad me-2"></i>
+                {{ getTranslation('advertisements') || 'Advertisements' }}
+              </h6>
+              <div class="selection-cards">
+                <div class="selection-card full-width">
+                  <label class="card-label">{{ getTranslation('selectAdvertisements') || 'Select Advertisements' }}</label>
+                  <div class="card-content" (click)="openAdvertisementSelector(); $event.stopPropagation()">
+                    {{ selectedAdvertisementIds.length > 0 ? (selectedAdvertisementIds.length + ' ' + (getTranslation('selected') || 'selected')) : (getTranslation('nothingSelected') || 'Nothing Selected') }}
+                  </div>
+                  <button type="button" class="btn btn-outline-primary btn-sm" (click)="openAdvertisementSelector(); $event.stopPropagation()">
+                    <i class="fas fa-th-large"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+              <!-- Form Actions -->
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save me-2"></i>
+                  {{ editingScreen ? (getTranslation('update') || 'Update') : (getTranslation('create') || 'Create') }}
+                </button>
+                <button *ngIf="editingScreen" type="button" class="btn btn-warning" (click)="resetScreen()" [disabled]="isResetting" title="{{ getTranslation('resetScreenHelp') || 'Clear all schedules, ad assignments, and regions for this screen to prevent ghost playback' }}">
+                  <i class="fas fa-undo me-2" *ngIf="!isResetting"></i>
+                  <span class="spinner-border spinner-border-sm me-2" *ngIf="isResetting" role="status"></span>
+                  {{ getTranslation('resetScreen') || 'Reset screen' }}
+                </button>
+                <button type="button" class="btn btn-secondary" routerLink="/screens/list">
+                  <i class="fas fa-times me-2"></i>
+                  {{ getTranslation('cancel') || 'Cancel' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div class="modal fade" [class.show]="showCreateGroupModal" [style.display]="showCreateGroupModal ? 'block' : 'none'" *ngIf="showCreateGroupModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title d-flex align-items-center gap-2">
+              <i class="fas fa-plus-circle flex-shrink-0"></i>
+              <span>{{ getTranslation('createGroup') || 'Create Group' }}</span>
+            </h5>
+            <button type="button" class="btn-close btn-close-white" (click)="showCreateGroupModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">{{ getTranslation('groupName') || 'Group Name' }} <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="newGroupName"
+                [placeholder]="getTranslation('enterGroupName') || 'Enter group name'"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ getTranslation('description') || 'Description' }}</label>
+              <textarea
+                class="form-control"
+                [(ngModel)]="newGroupDescription"
+                rows="3"
+                [placeholder]="getTranslation('enterDescription') || 'Enter description'"
+              ></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-success" (click)="createGroup()" [disabled]="!newGroupName.trim()">
+                <i class="fas fa-save me-2"></i>
+                {{ getTranslation('create') || 'Create' }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="showCreateGroupModal = false">
+                <i class="fas fa-times me-2"></i>
+                {{ getTranslation('cancel') || 'Cancel' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade" [class.show]="showCreateGroupModal" *ngIf="showCreateGroupModal"></div>
+
+    <!-- Advertisement picker modal (previews + multi-select) -->
+    <div
+      class="modal fade advertisement-picker-modal"
+      [class.show]="showAdvertisementModal"
+      [style.display]="showAdvertisementModal ? 'block' : 'none'"
+      *ngIf="showAdvertisementModal"
+      tabindex="-1"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'adPickerTitle'"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title d-flex align-items-center gap-2" id="adPickerTitle">
+              <i class="fas fa-ad flex-shrink-0"></i>
+              <span>{{ getTranslation('selectAdvertisements') || 'Select Advertisements' }}</span>
+            </h5>
+            <button type="button" class="btn-close btn-close-white" (click)="closeAdvertisementModal()" [attr.aria-label]="getTranslation('cancel') || 'Close'"></button>
+          </div>
+          <div class="modal-body">
+            <div class="ad-picker-grid" *ngIf="availableAdvertisements.length > 0">
+              <label
+                class="ad-picker-card"
+                *ngFor="let ad of availableAdvertisements"
+                [class.ad-picker-card--selected]="ad.id != null && isPendingAdvertisementSelected(ad.id)"
+              >
+                <input
+                  type="checkbox"
+                  class="ad-picker-checkbox"
+                  [checked]="ad.id != null && isPendingAdvertisementSelected(ad.id)"
+                  (change)="togglePendingAdvertisement(ad.id)"
+                />
+                <div class="ad-picker-preview">
+                  <video
+                    *ngIf="showVideoPreview(ad)"
+                    class="ad-picker-video"
+                    [src]="getFileUrl(ad.fileUrl)"
+                    muted
+                    playsinline
+                    preload="metadata"
+                  ></video>
+                  <img
+                    *ngIf="!showVideoPreview(ad) && showImagePreview(ad)"
+                    [src]="getAdPreviewUrl(ad)"
+                    [alt]="ad.title"
+                    loading="lazy"
+                  />
+                  <div class="ad-picker-fallback" *ngIf="!showVideoPreview(ad) && !showImagePreview(ad)">
+                    <i class="fas fa-file-powerpoint" *ngIf="ad.type === 'presentation'"></i>
+                    <i class="fas fa-file-pdf" *ngIf="ad.type === 'document'"></i>
+                    <i class="fas fa-file" *ngIf="ad.type !== 'presentation' && ad.type !== 'document'"></i>
+                  </div>
+                </div>
+                <span class="ad-picker-title">{{ ad.title }}</span>
+              </label>
+            </div>
+            <p class="text-muted text-center py-4 mb-0" *ngIf="availableAdvertisements.length === 0">
+              {{ getTranslation('noAdvertisementsAvailable') || 'No advertisements available' }}
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeAdvertisementModal()">
+              {{ getTranslation('cancel') || 'Cancel' }}
+            </button>
+            <button type="button" class="btn btn-success" (click)="submitAdvertisementModal()">
+              <i class="fas fa-check me-2"></i>
+              {{ getTranslation('submit') || 'Submit' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="modal-backdrop fade"
+      [class.show]="showAdvertisementModal"
+      *ngIf="showAdvertisementModal"
+      (click)="closeAdvertisementModal()"
+    ></div>
+  </div>
+</div>

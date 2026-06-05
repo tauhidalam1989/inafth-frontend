@@ -1,0 +1,260 @@
+<div class="sub-locations-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Confirm Dialog -->
+  <app-confirm-dialog
+    [visible]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="onCancelDelete()">
+  </app-confirm-dialog>
+
+  <div class="container-fluid">
+    <!-- Success Banner -->
+    <div class="alert alert-success alert-dismissible fade show" role="alert" *ngIf="showSuccessBanner">
+      <i class="fas fa-check-circle me-2"></i>
+      {{ editingLocation ? getTranslation('locationUpdatedSuccessfully') : getTranslation('locationAddedSuccessfully') }}
+      <button type="button" class="btn-close" (click)="showSuccessBanner = false"></button>
+    </div>
+
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          <i class="fas fa-map-marker-alt"></i>
+          {{ getTranslation('subLocations') }}
+        </h1>
+        <div class="header-actions">
+          <button 
+            type="button"
+            class="btn btn-primary"
+            (click)="showUserList = false"
+            *ngIf="!editingLocation">
+            <i class="fas fa-plus"></i>
+            {{ getTranslation('addNewLocation') }}
+          </button>
+          <button 
+            type="button"
+            class="btn btn-secondary"
+            (click)="showUserList = true"
+            *ngIf="!editingLocation">
+            <i class="fas fa-list"></i>
+            {{ getTranslation('showLocationsList') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Location Form -->
+    <div class="add-location-form" *ngIf="!showUserList">
+      <div class="form-card">
+        <h3 class="form-title">
+          {{ editingLocation ? getTranslation('editLocation') : getTranslation('addNewLocation') }}
+        </h3>
+        <form [formGroup]="locationForm" (ngSubmit)="saveLocation()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">{{ getTranslation('locationName') }} *</label>
+              <input 
+                type="text" 
+                id="name" 
+                formControlName="name" 
+                class="form-control"
+                [placeholder]="getTranslation('enterLocationName')">
+            </div>
+            <div class="form-group">
+              <label for="address">{{ getTranslation('address') }} *</label>
+              <input 
+                type="text" 
+                id="address" 
+                formControlName="address" 
+                class="form-control"
+                [placeholder]="getTranslation('enterAddress')">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="type">{{ getTranslation('locationType') }} *</label>
+              <input 
+                type="text" 
+                id="type" 
+                formControlName="type" 
+                class="form-control"
+                [placeholder]="getTranslation('selectLocationType') || 'Enter location type'"
+                [class.is-invalid]="locationForm.get('type')?.invalid && locationForm.get('type')?.touched">
+              <div class="invalid-feedback" *ngIf="locationForm.get('type')?.invalid && locationForm.get('type')?.touched">
+                {{ getTranslation('locationTypeRequired') || 'Location type is required' }}
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="status">{{ getTranslation('status') }} *</label>
+              <select id="status" formControlName="status" class="form-control">
+                <option value="active">{{ getTranslation('active') }}</option>
+                <option value="inactive">{{ getTranslation('inactive') }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="editingLocation ? cancelEdit() : resetForm()">
+              {{ editingLocation ? getTranslation('cancel') : getTranslation('reset') }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="!locationForm.valid">
+              {{ editingLocation ? getTranslation('saveChanges') : getTranslation('addLocation') }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary" (click)="showUserList = true">
+              <i class="fas fa-times"></i>
+              {{ getTranslation('cancel') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section" *ngIf="showUserList">
+      <div class="filters-card">
+        <div class="search-filter">
+          <div class="search-input">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (input)="filterLocations()"
+              [placeholder]="getTranslation('searchLocations')"
+              class="form-control">
+          </div>
+        </div>
+        <div class="status-filter">
+          <select [(ngModel)]="selectedStatus" (change)="filterLocations()" class="form-control">
+            <option value="all">{{ getTranslation('allStatuses') }}</option>
+            <option value="active">{{ getTranslation('active') }}</option>
+            <option value="inactive">{{ getTranslation('inactive') }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Locations Table -->
+    <div class="locations-list" *ngIf="showUserList">
+      <div class="list-header">
+        <span class="total-count">{{ getTranslation('totalLocations') }}: {{ filteredLocations.length }}</span>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>{{ getTranslation('name') }}</th>
+              <th>{{ getTranslation('address') }}</th>
+              <th>{{ getTranslation('type') }}</th>
+              <th>{{ getTranslation('status') }}</th>
+              <th>{{ getTranslation('lastUpdated') }}</th>
+              <th>{{ getTranslation('actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let location of paginatedLocations">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="location-avatar me-2">
+                    <i class="fas fa-map-marker-alt"></i>
+                  </div>
+                  <div class="fw-bold">{{ location.name }}</div>
+                </div>
+              </td>
+              <td>{{ location.address }}</td>
+              <td>
+                <span class="badge" [ngClass]="getTypeBadgeClass(location.type)">
+                  {{ getTypeDisplayName(location.type) }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusBadgeClass(location.status)">
+                  {{ getStatusDisplayName(location.status) }}
+                </span>
+              </td>
+              <td>{{ location.updatedAt | date:'short' }}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button 
+                    class="btn btn-sm" 
+                    [class]="location.status === 'active' ? 'btn-warning' : 'btn-success'"
+                    (click)="toggleLocationStatus(location)">
+                    {{ location.status === 'active' ? getTranslation('deactivate') : getTranslation('activate') }}
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-outline-primary"
+                    (click)="editLocation(location)"
+                    [title]="getTranslation('edit')">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-outline-danger" 
+                    (click)="deleteLocation(location.id)"
+                    [title]="getTranslation('delete')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="empty-state" *ngIf="filteredLocations.length === 0">
+        <i class="fas fa-map-marker-alt"></i>
+        <p>{{ getTranslation('noLocationsFound') }}</p>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex justify-content-between align-items-center mt-4" *ngIf="filteredLocations.length > 0">
+        <div class="pagination-info">
+          <span class="text-muted">
+            {{ getTranslation('showing') }} {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredLocations.length) }} {{ getTranslation('of') }} {{ filteredLocations.length }}
+          </span>
+          <div class="mt-2">
+            <label class="form-label me-2">{{ getTranslation('itemsPerPage') }}:</label>
+            <select class="form-select form-select-sm d-inline-block w-auto" [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+        
+        <nav aria-label="Sub-locations pagination">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+                {{ getTranslation('previous') }}
+              </button>
+            </li>
+            
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="goToPage(1)" [disabled]="currentPage === 1">
+                {{ getTranslation('first') }}
+              </button>
+            </li>
+            
+            <li class="page-item" *ngFor="let page of getVisiblePages()" [class.active]="page === currentPage">
+              <button class="page-link" (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </li>
+            
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">
+                {{ getTranslation('next') }}
+              </button>
+            </li>
+            
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="goToPage(totalPages)" [disabled]="currentPage === totalPages">
+                {{ getTranslation('last') }}
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

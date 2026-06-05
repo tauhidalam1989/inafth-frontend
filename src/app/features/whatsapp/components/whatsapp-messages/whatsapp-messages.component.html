@@ -1,0 +1,357 @@
+<div class="whatsapp-messages-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fab fa-whatsapp"></i>
+        {{ getTranslation('whatsappMessages') }}
+      </h1>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="showAddForm = !showAddForm">
+          <i class="fas fa-plus"></i>
+          {{ getTranslation('sendNewMessage') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send Message Form -->
+  <div class="add-message-form" *ngIf="showAddForm">
+    <div class="form-card">
+      <h3 class="form-title">{{ getTranslation('sendNewMessage') }}</h3>
+      
+      <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
+        <!-- Send Mode Selection -->
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>{{ getTranslation('sendMode') }} *</label>
+            <div class="mode-selection">
+              <button 
+                type="button"
+                class="btn"
+                [class.btn-primary]="sendMode === 'individual'"
+                [class.btn-outline-primary]="sendMode !== 'individual'"
+                (click)="messageForm.patchValue({ sendMode: 'individual' }); sendMode = 'individual'; updateFormValidators()">
+                <i class="fas fa-user"></i>
+                {{ getTranslation('individual') }}
+              </button>
+              <button 
+                type="button"
+                class="btn"
+                [class.btn-primary]="sendMode === 'bulk'"
+                [class.btn-outline-primary]="sendMode !== 'bulk'"
+                (click)="messageForm.patchValue({ sendMode: 'bulk' }); sendMode = 'bulk'; updateFormValidators()">
+                <i class="fas fa-users"></i>
+                {{ getTranslation('bulk') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Individual Mode: Phone Number -->
+        <div class="form-row" *ngIf="sendMode === 'individual'">
+          <div class="form-group">
+            <label for="recipientPhone">{{ getTranslation('phoneNumber') }} *</label>
+            <input 
+              type="tel" 
+              id="recipientPhone" 
+              formControlName="recipientPhone" 
+              class="form-control"
+              [class.is-invalid]="messageForm.get('recipientPhone')?.invalid && messageForm.get('recipientPhone')?.touched"
+              placeholder="+966501234567">
+            <div class="invalid-feedback" *ngIf="messageForm.get('recipientPhone')?.invalid && messageForm.get('recipientPhone')?.touched">
+              {{ getTranslation('phoneNumber') }} {{ getTranslation('required') }}
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="recipientName">{{ getTranslation('recipientName') }}</label>
+            <input 
+              type="text" 
+              id="recipientName" 
+              formControlName="recipientName" 
+              class="form-control"
+              [placeholder]="getTranslation('recipientNameOptional')">
+          </div>
+        </div>
+
+        <!-- Bulk Mode: User Selection -->
+        <div class="form-row" *ngIf="sendMode === 'bulk'">
+          <div class="form-group full-width">
+            <label>
+              <input 
+                type="checkbox" 
+                formControlName="sendToAll"
+                (change)="onSendToAllChange()">
+              {{ getTranslation('sendToAllUsers') }}
+            </label>
+          </div>
+        </div>
+
+        <div class="form-row" *ngIf="sendMode === 'bulk' && !sendToAll">
+          <div class="form-group full-width">
+            <label>{{ getTranslation('selectUsers') }} *</label>
+            <div class="users-selection">
+              <div class="user-checkbox" *ngFor="let user of users">
+                <label class="user-checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    [checked]="selectedUserIds.includes(user.id)"
+                    (change)="toggleUserSelection(user.id)">
+                  <span class="user-info">
+                    <strong>{{ user.username }}</strong>
+                    <small>{{ user.phone1 || user.phone2 }}</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div class="invalid-feedback" *ngIf="messageForm.get('recipientUserIds')?.invalid && messageForm.get('recipientUserIds')?.touched">
+              {{ getTranslation('selectUsers') }} {{ getTranslation('required') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Type -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="messageType">{{ getTranslation('messageType') }} *</label>
+            <select id="messageType" formControlName="messageType" class="form-control">
+              <option value="template">{{ getTranslation('template') }}</option>
+              <option value="text">{{ getTranslation('text') }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Template Selection -->
+        <div class="form-row" *ngIf="messageForm.get('messageType')?.value === 'template'">
+          <div class="form-group full-width">
+            <label for="templateId">{{ getTranslation('selectTemplate') }} *</label>
+            <select 
+              id="templateId" 
+              formControlName="templateId" 
+              class="form-control"
+              [class.is-invalid]="messageForm.get('templateId')?.invalid && messageForm.get('templateId')?.touched">
+              <option value="">{{ getTranslation('selectTemplate') }}</option>
+              <option *ngFor="let template of templates" [value]="template.id">
+                {{ template.name }} ({{ getCategoryDisplayName(template.category) }})
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="messageForm.get('templateId')?.invalid && messageForm.get('templateId')?.touched">
+              {{ getTranslation('selectTemplate') }} {{ getTranslation('required') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Template Variables -->
+        <div class="form-row" *ngIf="selectedTemplate && templateVariables.length > 0">
+          <div class="form-group full-width">
+            <label>{{ getTranslation('variables') }}</label>
+            <div class="variables-inputs" formGroupName="variables">
+              <div class="variable-input" *ngFor="let variable of templateVariables">
+                <label [for]="'var_' + variable">{{ '{{' + variable + '}}' }}</label>
+                <input 
+                  type="text" 
+                  [id]="'var_' + variable"
+                  [formControlName]="variable"
+                  class="form-control"
+                  [placeholder]="getTranslation('enterVariableValue')">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Message Content -->
+        <div class="form-row" *ngIf="messageForm.get('messageType')?.value === 'text'">
+          <div class="form-group full-width">
+            <label for="messageContent">{{ getTranslation('messageText') }} *</label>
+            <textarea 
+              id="messageContent" 
+              formControlName="messageContent" 
+              class="form-control"
+              rows="4"
+              [class.is-invalid]="messageForm.get('messageContent')?.invalid && messageForm.get('messageContent')?.touched"
+              [placeholder]="getTranslation('enterMessageText')"></textarea>
+            <div class="invalid-feedback" *ngIf="messageForm.get('messageContent')?.invalid && messageForm.get('messageContent')?.touched">
+              {{ getTranslation('messageText') }} {{ getTranslation('required') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="resetForm(); showAddForm = false">
+            {{ getTranslation('cancel') }}
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="messageForm.invalid || isLoading">
+            <i class="fab fa-whatsapp"></i>
+            {{ isLoading ? (getTranslation('sending') || 'Sending...') : getTranslation('sendMessage') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="search-filter">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (input)="filterMessages()"
+            [placeholder]="getTranslation('searchMessages')"
+            class="form-control">
+        </div>
+      </div>
+      <div class="status-filter">
+        <select [(ngModel)]="selectedStatus" (change)="filterMessages()" class="form-control">
+          <option value="all">{{ getTranslation('allStatuses') }}</option>
+          <option value="pending">{{ getTranslation('pending') }}</option>
+          <option value="sent">{{ getTranslation('sent') }}</option>
+          <option value="delivered">{{ getTranslation('delivered') }}</option>
+          <option value="failed">{{ getTranslation('failed') }}</option>
+        </select>
+      </div>
+      <div class="type-filter">
+        <select [(ngModel)]="selectedType" (change)="filterMessages()" class="form-control">
+          <option value="all">{{ getTranslation('allTypes') }}</option>
+          <option value="template">{{ getTranslation('template') }}</option>
+          <option value="text">{{ getTranslation('text') }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages List -->
+  <div class="messages-list-section">
+    <div class="list-header">
+      <div class="total-count">
+        <i class="fas fa-list me-2"></i>
+        {{ getTranslation('totalMessages') }}: {{ filteredMessages.length }}
+      </div>
+      <div class="status-summary">
+        <span class="status-item pending">{{ getTranslation('pending') }}: {{ getStatusCount('pending') }}</span>
+        <span class="status-item sent">{{ getTranslation('sent') }}: {{ getStatusCount('sent') }}</span>
+        <span class="status-item delivered">{{ getTranslation('delivered') }}: {{ getStatusCount('delivered') }}</span>
+        <span class="status-item failed">{{ getTranslation('failed') }}: {{ getStatusCount('failed') }}</span>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="messages-table">
+        <thead>
+          <tr>
+            <th>{{ getTranslation('recipient') }}</th>
+            <th>{{ getTranslation('messageContent') }}</th>
+            <th>{{ getTranslation('template') }}</th>
+            <th>{{ getTranslation('status') }}</th>
+            <th>{{ getTranslation('date') }}</th>
+            <th>{{ getTranslation('actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let message of filteredMessages" [class]="message.status">
+            <td class="recipient-cell">
+              <div class="recipient-info">
+                <div class="phone-number">
+                  <i class="fas fa-phone"></i>
+                  {{ message.recipientPhone }}
+                </div>
+                <div class="recipient-name" *ngIf="message.recipientName || message.recipientUserName">
+                  {{ message.recipientName || message.recipientUserName }}
+                </div>
+              </div>
+            </td>
+            <td class="content-cell">
+              <div class="message-content-preview">
+                {{ (message.messageContent.length > 100) ? (message.messageContent | slice:0:100) + '...' : message.messageContent }}
+              </div>
+            </td>
+            <td class="template-cell">
+              <span *ngIf="message.templateName" class="template-badge">
+                {{ message.templateName }}
+              </span>
+              <span *ngIf="!message.templateName" class="text-muted">-</span>
+            </td>
+            <td class="status-cell">
+              <span class="status-badge" [class]="message.status">
+                {{ getStatusDisplayName(message.status) }}
+              </span>
+            </td>
+            <td class="date-cell">
+              <div class="date-info">
+                <i class="fas fa-clock"></i>
+                <span>{{ message.createdAt | date:'short' }}</span>
+              </div>
+            </td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button 
+                  class="btn btn-sm btn-outline-warning" 
+                  (click)="resendMessage(message)" 
+                  [title]="getTranslation('resend')"
+                  *ngIf="message.status === 'failed'">
+                  <i class="fas fa-redo"></i>
+                </button>
+                <button 
+                  class="btn btn-sm btn-outline-danger" 
+                  (click)="deleteMessage(message)" 
+                  [title]="getTranslation('delete')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredMessages.length === 0 && !isLoading" class="empty-state">
+        <i class="fab fa-whatsapp"></i>
+        <p>{{ getTranslation('noMessagesFound') }}</p>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="empty-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>{{ getTranslation('loading') }}</p>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ errorMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section" *ngIf="totalPages > 1">
+    <nav aria-label="Messages pagination">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" (click)="onPageChange(currentPage - 1)" [attr.aria-disabled]="currentPage === 1">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+        </li>
+        <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index" [class.active]="currentPage === i + 1">
+          <a class="page-link" (click)="onPageChange(i + 1)">{{ i + 1 }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" (click)="onPageChange(currentPage + 1)" [attr.aria-disabled]="currentPage === totalPages">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Confirm Delete Dialog -->
+  <app-confirm-dialog
+    [visible]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="onCancelDelete()"
+  ></app-confirm-dialog>
+</div>

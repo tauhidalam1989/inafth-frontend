@@ -1,0 +1,152 @@
+<header class="header" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'" style="background: linear-gradient(180deg, #004d40 0%, #00695c 100%) !important;">
+  <div class="header-container" [attr.dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+    <!-- Left Side - Mobile Menu Toggle and Logo -->
+    <div class="header-left">
+      <!-- Mobile Menu Toggle (Visible on mobile/tablet) -->
+      <div class="mobile-menu-toggle">
+        <button class="btn btn-link mobile-menu-btn" (click)="toggleMobileMenu($event)" [title]="getTranslation('toggleMenu')" type="button">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+      <div class="logo-section">
+        <img src="assets/logo/screen.jpeg" alt="Logo" class="logo">
+      </div>
+    </div>
+
+    <!-- Right Side - All Other Elements -->
+    <div class="header-right">
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- Welcome Message -->
+        <div class="welcome-message d-none d-lg-block">
+          <span class="welcome-text">{{ welcomeMessage }}</span>
+        </div>
+
+        <!-- Language Toggle -->
+        <div class="language-toggle">
+          <button 
+            class="btn btn-outline-light btn-sm" 
+            (click)="toggleLanguage()"
+            [title]="getTranslation('switchLanguage')">
+            <i class="fas fa-globe"></i>
+            <span class="d-none d-sm-inline">{{ currentLanguage === 'ar' ? 'EN' : 'عربي' }}</span>
+          </button>
+        </div>
+
+        <!-- Notifications -->
+        <div class="notifications-dropdown dropdown">
+          <button 
+            class="btn btn-link position-relative notification-btn" 
+            data-bs-toggle="dropdown"
+            [title]="getTranslation('notifications')"
+            [attr.aria-expanded]="false">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge" *ngIf="unreadCount > 0">
+              {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end notification-dropdown-menu">
+            <!-- Header -->
+            <div class="notification-header">
+              <div class="notification-header-content">
+                <h5 class="notification-title">
+                  <i class="fas fa-bell"></i>
+                  {{ getTranslation('recentNotifications') || 'Recent Notifications' }}
+                </h5>
+                <span class="notification-count-badge" *ngIf="unreadCount > 0">
+                  {{ unreadCount }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Notifications List -->
+            <div class="notification-list">
+              <div *ngIf="recentNotifications.length === 0" class="notification-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>{{ currentLanguage === 'ar' ? 'لا توجد إشعارات' : 'No notifications' }}</p>
+              </div>
+              
+              <div 
+                *ngFor="let notification of recentNotifications" 
+                class="notification-item"
+                [class]="'notification-' + notification.type">
+                <div class="notification-icon-wrapper">
+                  <i class="fas" 
+                     [class.fa-info-circle]="notification.type === 'info'"
+                     [class.fa-check-circle]="notification.type === 'success'"
+                     [class.fa-exclamation-triangle]="notification.type === 'warning'"
+                     [class.fa-times-circle]="notification.type === 'error'"
+                     [class.fa-bell]="notification.type !== 'info' && notification.type !== 'success' && notification.type !== 'warning' && notification.type !== 'error'"></i>
+                </div>
+                <div class="notification-content">
+                  <p class="notification-message">{{ notification.message }}</p>
+                  <span class="notification-time">
+                    <i class="fas fa-clock"></i>
+                    {{ notification.time }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="notification-footer" *ngIf="recentNotifications.length > 0">
+              <a class="view-all-btn" [routerLink]="['/notifications/notifications']">
+                <i class="fas fa-eye"></i>
+                {{ getTranslation('viewAllNotifications') || 'View All Notifications' }}
+                <i class="fas fa-chevron-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile -->
+        <div class="user-profile dropdown">
+          <button 
+            class="btn btn-link d-flex align-items-center" 
+            data-bs-toggle="dropdown"
+            [title]="getTranslation('userProfile')">
+            <div class="user-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="user-info d-none d-md-inline">
+              <span class="user-name">{{ currentUser?.username || getTranslation('adminUser') }}</span>
+              <small class="user-role d-block" *ngIf="currentUser">
+                {{ currentUser.userType === 'super-user' ? (currentLanguage === 'ar' ? 'مستخدم فائق' : 'Super User') :
+                   currentUser.userType === 'admin-user' ? (currentLanguage === 'ar' ? 'مدير' : 'Admin') :
+                   (currentLanguage === 'ar' ? 'مستخدم' : 'User') }}
+              </small>
+            </div>
+            <i class="fas fa-chevron-down ms-1 d-none d-md-inline"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li class="dropdown-header" *ngIf="currentUser">
+              <div class="user-profile-header">
+                <div class="user-avatar-large">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                  <strong>{{ currentUser.username }}</strong>
+                  <small class="text-muted d-block">{{ currentUser.email }}</small>
+                </div>
+              </div>
+            </li>
+            <li class="dropdown-divider" *ngIf="currentUser"></li>
+            <li><a class="dropdown-item" [routerLink]="['/users']"><i class="fas fa-user me-2"></i>{{ getTranslation('profile') }}</a></li>
+            <li><a class="dropdown-item" [routerLink]="['/system-settings']"><i class="fas fa-cog me-2"></i>{{ getTranslation('settings') }}</a></li>
+            <li class="dropdown-divider"></li>
+            <li><a class="dropdown-item" (click)="logout()" style="cursor: pointer;"><i class="fas fa-sign-out-alt me-2"></i>{{ getTranslation('logout') }}</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Logout Confirmation Dialog -->
+<app-confirm-dialog
+  [visible]="showLogoutConfirm"
+  [data]="logoutConfirmData"
+  (confirmed)="onLogoutConfirmed()"
+  (cancelled)="onLogoutCancelled()">
+</app-confirm-dialog>

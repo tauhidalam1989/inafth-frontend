@@ -1,0 +1,469 @@
+.view-advertisements-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  &[dir="rtl"] {
+    .page-title {
+      text-align: right;
+    }
+
+    .stat-card {
+      .stat-content {
+        text-align: right;
+      }
+    }
+
+    .table-actions {
+      flex-direction: row-reverse;
+    }
+
+    .advertisement-info {
+      .ad-details {
+        text-align: right;
+      }
+    }
+  }
+}
+
+.page-title {
+  color: #2c3e50;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+
+  i {
+    color: #667eea;
+  }
+}
+
+// Filters Card
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+
+  .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    padding: 20px 25px;
+    border: none;
+
+    h5 {
+      margin: 0;
+      font-weight: 600;
+    }
+  }
+
+  .card-body {
+    padding: 25px;
+  }
+}
+
+.form-label {
+  font-weight: 600;
+  color: #34495e;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+
+  i {
+    color: #667eea;
+    width: 20px;
+    margin-right: 8px;
+  }
+}
+
+.form-control,
+.form-select {
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+
+  &:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    background: #fff;
+  }
+
+  &::placeholder {
+    color: #adb5bd;
+  }
+}
+
+// Statistics Cards
+.stat-card {
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  }
+
+  .stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+  }
+
+  .stat-content {
+    h4 {
+      margin: 0 0 5px 0;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+// Table Styles
+.table-responsive {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table {
+  margin-bottom: 0;
+
+  thead {
+    th {
+      border: none;
+      padding: 15px 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      &.sortable {
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        i {
+          margin-left: 5px;
+          opacity: 0.7;
+        }
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+      }
+
+      td {
+        padding: 15px 12px;
+        vertical-align: middle;
+        border-top: 1px solid #e9ecef;
+      }
+    }
+  }
+}
+
+// Advertisement Info in Table
+.advertisement-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  .ad-thumbnail {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .ad-details {
+    strong {
+      color: #2c3e50;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    small {
+      color: #6c757d;
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// Badges
+.badge {
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+// CTR Value
+.ctr-value {
+  font-weight: 600;
+  font-size: 0.9rem;
+
+  &.text-success {
+    color: #28a745 !important;
+  }
+
+  &.text-warning {
+    color: #ffc107 !important;
+  }
+
+  &.text-danger {
+    color: #dc3545 !important;
+  }
+}
+
+// Table Actions
+.table-actions {
+  display: flex;
+  gap: 10px;
+
+  .btn {
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+// Button Group in Table
+.btn-group {
+  .btn {
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// Empty State
+.text-center {
+  .fa-chart-bar {
+    color: #dee2e6;
+  }
+
+  h5 {
+    color: #6c757d;
+    margin-bottom: 10px;
+  }
+
+  p {
+    color: #adb5bd;
+    margin-bottom: 0;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .view-advertisements-container {
+    padding: 15px;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+
+    i {
+      margin-right: 0;
+      margin-bottom: 5px;
+    }
+  }
+
+  .card {
+    .card-header {
+      padding: 15px 20px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+  }
+
+  .stat-card {
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+
+    .stat-icon {
+      font-size: 2rem;
+    }
+
+    .stat-content {
+      h4 {
+        font-size: 1.5rem;
+      }
+    }
+  }
+
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .advertisement-info {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+
+    .ad-thumbnail {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  .table-actions {
+    flex-direction: column;
+    gap: 5px;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .view-advertisements-container {
+    padding: 10px;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .card {
+    .card-header {
+      padding: 12px 15px;
+    }
+
+    .card-body {
+      padding: 15px;
+    }
+  }
+
+  .stat-card {
+    padding: 15px;
+
+    .stat-icon {
+      font-size: 1.75rem;
+    }
+
+    .stat-content {
+      h4 {
+        font-size: 1.25rem;
+      }
+
+      p {
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .form-control,
+  .form-select {
+    padding: 10px 14px;
+    font-size: 0.95rem;
+  }
+
+  .table {
+    thead th,
+    tbody td {
+      padding: 10px 8px;
+      font-size: 0.8rem;
+    }
+  }
+
+  .advertisement-info {
+    .ad-thumbnail {
+      width: 35px;
+      height: 35px;
+    }
+  }
+}
+
+// RTL Specific Adjustments
+[dir="rtl"] {
+  .form-label {
+    i {
+      margin-right: 0;
+      margin-left: 8px;
+    }
+  }
+
+  .stat-card {
+    .stat-content {
+      text-align: right;
+    }
+  }
+
+  .table {
+    thead th {
+      &.sortable i {
+        margin-left: 0;
+        margin-right: 5px;
+      }
+    }
+  }
+
+  .advertisement-info {
+    .ad-details {
+      text-align: right;
+    }
+  }
+
+  .table-actions {
+    .btn {
+      i {
+        margin-right: 0;
+        margin-left: 5px;
+      }
+    }
+  }
+
+  .btn-group {
+    .btn {
+      i {
+        margin-right: 0;
+        margin-left: 5px;
+      }
+    }
+  }
+}

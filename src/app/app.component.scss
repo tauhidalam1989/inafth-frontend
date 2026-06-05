@@ -1,0 +1,269 @@
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #ffffff !important;
+}
+
+// Sidebar Overlay for Mobile
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+// Main Content Area
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 280px; // Default sidebar width
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: calc(100% - 280px);
+  
+  &.sidebar-collapsed {
+    margin-left: 70px; // Collapsed sidebar width
+    width: calc(100% - 70px);
+  }
+  
+  // Tablet responsive
+  @media (min-width: 768px) and (max-width: 991.98px) {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+    
+    &.sidebar-collapsed {
+      margin-left: 70px;
+      width: calc(100% - 70px);
+    }
+  }
+  
+  // Mobile responsive
+  @media (max-width: 767.98px) {
+    margin-left: 0 !important;
+    width: 100% !important;
+    
+    &.sidebar-collapsed {
+      margin-left: 0 !important;
+      width: 100% !important;
+    }
+  }
+  
+  // Auth pages - no sidebar margins
+  &:has(.auth-page) {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+  }
+}
+
+// Page Content
+.page-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #ffffff !important;
+  
+  // Mobile responsive
+  @media (max-width: 767.98px) {
+    padding: 15px;
+  }
+  
+  @media (max-width: 575.98px) {
+    padding: 10px;
+  }
+  
+  // Auth pages styling
+  &.auth-page {
+    padding: 0;
+    background: transparent !important;
+    
+    // Ensure auth pages take full width
+    .login-container,
+    .register-container,
+    .forgot-password-container {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 20px;
+    }
+  }
+}
+
+// RTL Support
+[dir="rtl"] {
+  .main-content {
+    margin-left: 0;
+    margin-right: 280px;
+    width: calc(100% - 280px);
+    
+    &.sidebar-collapsed {
+      margin-left: 0;
+      margin-right: 70px;
+      width: calc(100% - 70px);
+    }
+    
+    @media (min-width: 768px) and (max-width: 991.98px) {
+      margin-right: 240px;
+      width: calc(100% - 240px);
+      
+      &.sidebar-collapsed {
+        margin-right: 70px;
+        width: calc(100% - 70px);
+      }
+    }
+    
+    @media (max-width: 767.98px) {
+      margin-right: 0 !important;
+      width: 100% !important;
+      
+      &.sidebar-collapsed {
+        margin-right: 0 !important;
+        width: 100% !important;
+      }
+    }
+    
+    // Auth pages - no sidebar margins
+    &:has(.auth-page) {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      width: 100% !important;
+    }
+  }
+}
+
+// RTL/LTR Visual Indicators
+.rtl {
+  .main-content {
+    margin-left: 0 !important;
+    margin-right: 280px !important;
+    
+    &.sidebar-collapsed {
+      margin-left: 0 !important;
+      margin-right: 70px !important;
+    }
+    
+    @media (max-width: 767.98px) {
+      margin-right: 0 !important;
+      
+      &.sidebar-collapsed {
+        margin-right: 0 !important;
+      }
+    }
+    
+    // Auth pages - no sidebar margins
+    &:has(.auth-page) {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+  }
+}
+
+.ltr {
+  .main-content {
+    margin-left: 280px !important;
+    margin-right: 0 !important;
+    
+    &.sidebar-collapsed {
+      margin-left: 70px !important;
+      margin-right: 0 !important;
+    }
+    
+    @media (max-width: 767.98px) {
+      margin-left: 0 !important;
+      
+      &.sidebar-collapsed {
+        margin-left: 0 !important;
+      }
+    }
+    
+    // Auth pages - no sidebar margins
+    &:has(.auth-page) {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+  }
+}
+
+// Responsive Breakpoints
+@media (max-width: 1199.98px) {
+  .page-content {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .page-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .app-container {
+    flex-direction: column;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .page-content {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .page-content {
+    padding: 10px;
+  }
+}
+
+// Print styles
+@media print {
+  .sidebar-overlay,
+  app-sidebar,
+  app-header {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  .page-content {
+    padding: 0 !important;
+  }
+}
+
+// Ensure white background is always applied
+.app-container,
+.main-content,
+.page-content {
+  background-color: #ffffff !important;
+}
+
+// Override any potential dark theme preferences
+@media (prefers-color-scheme: dark) {
+  .app-container,
+  .main-content,
+  .page-content {
+    background-color: #ffffff !important;
+    color: #333 !important;
+  }
+}

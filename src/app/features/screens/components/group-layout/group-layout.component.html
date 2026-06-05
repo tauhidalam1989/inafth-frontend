@@ -1,0 +1,318 @@
+<div class="group-layout-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- 1. Select Group -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3 class="card-title mb-0">
+        <i class="fas fa-layer-group me-2"></i>
+        {{ getTranslation('groupLayout') || 'Group Layout' }}
+      </h3>
+    </div>
+    <div class="card-body">
+      <label class="form-label">{{ getTranslation('selectGroup') || 'Select Group' }}</label>
+      <select
+        class="form-select mb-3"
+        [(ngModel)]="selectedGroupId"
+        (ngModelChange)="onGroupChange()"
+        [disabled]="isLoadingGroups || groups.length === 0">
+        <option [ngValue]="null">{{ getTranslation('selectGroup') || 'Select a group...' }}</option>
+        <option *ngFor="let g of groups" [ngValue]="g.id">{{ g.name }}</option>
+      </select>
+
+      <label class="form-label" *ngIf="selectedGroupId">{{ getTranslation('screensInGroup') || 'Screens in this group' }}</label>
+      <div *ngIf="selectedGroupId && screensInGroup.length === 0" class="text-muted py-2">
+        {{ getTranslation('noScreensInGroup') || 'No screens in this group.' }}
+      </div>
+      <div *ngIf="screensInGroup.length > 0" class="screens-in-group-list mb-3">
+        <div
+          *ngFor="let screen of screensInGroup"
+          class="screen-chip"
+          [class.selected]="selectedScreen?.id === screen.id"
+          (click)="selectScreen(screen)">
+          <span class="screen-name">{{ screen.name }}</span>
+          <span class="screen-meta" *ngIf="screen.ipAddress">{{ screen.ipAddress }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="selectedScreen && isLoadingDetails" class="text-center py-3">
+        <div class="spinner-border spinner-border-sm" role="status"></div>
+        <span class="ms-2">{{ getTranslation('loading') || 'Loading...' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Regions (when screen selected) - match By Screen -->
+  <div class="card mb-4" *ngIf="fullScreen && !isLoadingDetails">
+    <div class="card-header">
+      <h3 class="card-title mb-0">
+        <i class="fas fa-th-large me-2"></i>
+        {{ getTranslation('screenRegions') || 'Screen Regions' }}
+      </h3>
+    </div>
+    <div class="card-body">
+      <div *ngIf="isLoadingRegions" class="text-center py-2">
+        <div class="spinner-border spinner-border-sm" role="status"></div>
+      </div>
+      <div *ngIf="!isLoadingRegions">
+        <!-- Visual Grid Preview (compact, one border) -->
+        <div class="grid-preview-wrap mb-3" *ngIf="screenRegions.length > 0">
+          <span class="grid-preview-label">
+            <i class="fas fa-th me-1"></i>
+            {{ getTranslation('createdRegions') || 'Created Regions' }} ({{ screenRegions.length }}) — {{ getGridColumns() }}×{{ getGridRows() }}
+          </span>
+          <div class="grid-preview"
+               [style.grid-template-columns]="'repeat(' + getGridColumns() + ', 1fr)'"
+               [style.grid-template-rows]="'repeat(' + getGridRows() + ', 1fr)'"
+               [style.display]="'grid'"
+               [style.grid-auto-flow]="'row'">
+            <div class="grid-cell" *ngFor="let region of getSortedRegions(); let i = index">
+              <span class="grid-cell-number">{{ i + 1 }} of {{ screenRegions.length }}</span>
+            </div>
+          </div>
+        </div>
+        <!-- Select Grid Layout (same options as By Screen) -->
+        <label class="form-label mb-2"><strong>{{ getTranslation('selectGridLayout') || 'Select Grid Layout:' }}</strong></label>
+        <div class="btn-group d-flex flex-wrap gap-2 mb-3">
+          <button type="button" class="btn btn-outline-primary" (click)="createGridLayout(1, 1)" [disabled]="isCreatingRegions">
+            <i class="fas fa-square me-1"></i> 1×1 (Full)
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="createGridLayout(1, 2)" [disabled]="isCreatingRegions">
+            <i class="fas fa-columns me-1"></i> 1×2 (Left/Right)
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="createGridLayout(2, 1)" [disabled]="isCreatingRegions">
+            <i class="fas fa-grip-lines me-1"></i> 2×1 (Top/Bottom)
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="createGridLayout(2, 2)" [disabled]="isCreatingRegions">
+            <i class="fas fa-th me-1"></i> 2×2 (4 Boxes)
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="createGridLayout(2, 3)" [disabled]="isCreatingRegions">
+            <i class="fas fa-th me-1"></i> 2×3 (6 Boxes)
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="createGridLayout(3, 2)" [disabled]="isCreatingRegions">
+            <i class="fas fa-th me-1"></i> 3×2 (6 Boxes)
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="createGridLayout(3, 3)" [disabled]="isCreatingRegions">
+            <i class="fas fa-th me-1"></i> 3×3 (9 Boxes)
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="createGridLayout(4, 4)" [disabled]="isCreatingRegions">
+            <i class="fas fa-th me-1"></i> 4×4 (16 Boxes)
+          </button>
+          <button type="button" class="btn btn-outline-danger" *ngIf="screenRegions.length > 0" (click)="resetRegions()" [disabled]="isCreatingRegions">
+            <i class="fas fa-redo me-1"></i> {{ getTranslation('reset') || 'Reset' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Assigned Advertisements (region, View, Schedule per ad) -->
+  <div class="card mb-4" *ngIf="fullScreen && !isLoadingDetails">
+    <div class="card-header">
+      <h3 class="card-title mb-0">
+        <i class="fas fa-bullhorn me-2"></i>
+        {{ getTranslation('assignAdvertisements') || 'Assign Advertisements' }}
+      </h3>
+    </div>
+    <div class="card-body">
+      <p class="text-muted small mb-3" *ngIf="(fullScreen.assignedAdvertisements?.length ?? 0) === 0">
+        {{ getTranslation('noAdvertisementsAssigned') || 'No advertisements assigned to this screen. Assign and configure ads in By Screen, then apply to this group.' }}
+      </p>
+
+      <!-- Assigned Advertisements cards (green header, card with Assign to Region, View, Schedule) -->
+      <div class="assigned-ads-section" [class.mt-4]="(fullScreen.assignedAdvertisements?.length ?? 0) > 0" *ngIf="(fullScreen.assignedAdvertisements?.length ?? 0) > 0">
+        <div class="assigned-ads-header">
+          <i class="fas fa-check-circle me-2"></i>
+          {{ getTranslation('assignedAdvertisements') || 'Assigned Advertisements' }}
+        </div>
+        <div class="row g-3 mt-2">
+          <div class="col-md-6 col-lg-4" *ngFor="let ad of fullScreen!.assignedAdvertisements">
+            <div class="assigned-ad-card card h-100">
+              <button type="button" class="btn btn-sm border-0 position-absolute remove-ad-btn"
+                      (click)="onRemoveAssignedAdvertisement(ad.id)" [title]="getTranslation('remove') || 'Remove'">
+                <i class="fas fa-times"></i>
+              </button>
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h6 class="card-title mb-0">{{ ad.title }}</h6>
+                  <span class="badge bg-success">
+                    <i class="fas fa-check me-1"></i>
+                    {{ getTranslation('assigned') || 'Assigned' }}
+                  </span>
+                </div>
+                <div class="mb-2">
+                  <span class="badge bg-info me-1">{{ ad.type || 'image' }}</span>
+                  <span class="text-muted small" *ngIf="ad.fileSize">{{ formatFileSize(ad.fileSize) }}</span>
+                </div>
+
+                <div class="mt-2" *ngIf="screenRegions.length > 0">
+                  <label class="form-label small mb-1">{{ getTranslation('assignToRegion') || 'Assign to Region' }}</label>
+                  <select class="form-select form-select-sm"
+                          [ngModel]="getSelectedRegionIdForAd(ad.id)"
+                          (ngModelChange)="onRegionSelectChange(ad.id, $event)">
+                    <option [ngValue]="null">{{ getTranslation('selectRegion') || 'Select region' }}</option>
+                    <option *ngFor="let region of getSortedRegions(); let i = index" [ngValue]="region.id">
+                      {{ i + 1 }} of {{ screenRegions.length }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="mt-2" *ngIf="getAdvertisementSchedule(ad.id)">
+                  <div class="schedule-info p-2 bg-light rounded small">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span><i class="fas fa-calendar-alt me-1"></i> {{ getTranslation('scheduled') || 'Scheduled' }}</span>
+                      <button type="button" class="btn btn-sm btn-link p-0" (click)="openScheduleModal(ad.id)" [title]="getTranslation('editSchedule') || 'Edit'">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                    </div>
+                    <div class="mt-1 text-muted" *ngIf="getAdvertisementSchedule(ad.id)?.startDate">
+                      {{ formatDateForInput(getAdvertisementSchedule(ad.id)!.startDate) }}
+                      <span *ngIf="getAdvertisementSchedule(ad.id)?.startTime"> {{ getAdvertisementSchedule(ad.id)!.startTime }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 d-flex gap-2">
+                  <button type="button" class="btn btn-success btn-sm flex-grow-1" (click)="openPreview(ad)">
+                    <i class="fas fa-play me-1"></i>
+                    {{ getTranslation('View') || 'View' }}
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="openScheduleModal(ad.id)" [title]="getTranslation('schedule') || 'Schedule'">
+                    <i class="fas fa-calendar-alt"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Settings -->
+  <div class="card mb-4" *ngIf="fullScreen && !isLoadingDetails">
+    <div class="card-header">
+      <h3 class="card-title mb-0">
+        <i class="fas fa-cog me-2"></i>
+        {{ getTranslation('settings') || 'Settings' }}
+      </h3>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">{{ getTranslation('orientation') || 'Orientation' }}</label>
+          <select class="form-select" [(ngModel)]="orientation">
+            <option value="landscape">{{ getTranslation('landscape') || 'Landscape' }}</option>
+            <option value="portrait">{{ getTranslation('portrait') || 'Portrait' }}</option>
+            <option value="auto">{{ getTranslation('auto') || 'Auto' }}</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">{{ getTranslation('screenSize') || 'Screen size' }}</label>
+          <select class="form-select" [(ngModel)]="screenSize">
+            <option value="small">{{ getTranslation('small') || 'Small' }}</option>
+            <option value="medium">{{ getTranslation('medium') || 'Medium' }}</option>
+            <option value="large">{{ getTranslation('large') || 'Large' }}</option>
+          </select>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary mt-3" (click)="saveSettings()" [disabled]="isSavingSettings">
+        <span *ngIf="isSavingSettings" class="spinner-border spinner-border-sm me-1" role="status"></span>
+        <i class="fas fa-save me-1"></i> {{ getTranslation('saveSettings') || 'Save settings' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- 5. Apply to this group -->
+  <div class="card mb-4" *ngIf="fullScreen && !isLoadingDetails">
+    <div class="card-body">
+      <p class="mb-3">{{ getTranslation('applyToGroupHelp') || 'When layout, ads and settings are ready, apply to all screens in this group.' }}</p>
+      <button
+        type="button"
+        class="btn btn-success btn-lg"
+        (click)="applyToGroup()"
+        [disabled]="isApplyingToGroup">
+        <span *ngIf="isApplyingToGroup" class="spinner-border spinner-border-sm me-1" role="status"></span>
+        <i class="fas fa-object-group me-1"></i>
+        {{ getTranslation('applyToGroup') || 'Apply to this group' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Preview modal (View) -->
+  <div class="modal fade" [class.show]="showPreviewModal" [style.display]="showPreviewModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ getTranslation('advertisementDetails') || 'Advertisement' }}: {{ selectedAdForPreview?.title }}</h5>
+          <button type="button" class="btn-close" (click)="closePreview()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" *ngIf="selectedAdForPreview">
+          <div class="text-center mb-3" *ngIf="selectedAdForPreview.type === 'image' && selectedAdForPreview.fileUrl">
+            <img [src]="selectedAdForPreview.fileUrl" class="img-fluid" style="max-height: 70vh;" alt="{{ selectedAdForPreview.title }}">
+          </div>
+          <div class="text-center" *ngIf="selectedAdForPreview.type === 'video' && selectedAdForPreview.fileUrl">
+            <video [src]="selectedAdForPreview.fileUrl" controls class="w-100" style="max-height: 70vh;"></video>
+          </div>
+          <p class="text-muted small mb-0 mt-2" *ngIf="selectedAdForPreview.fileSize">{{ formatFileSize(selectedAdForPreview.fileSize) }}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closePreview()">{{ getTranslation('close') || 'Close' }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showPreviewModal" [style.display]="showPreviewModal ? 'block' : 'none'" (click)="closePreview()"></div>
+
+  <!-- Schedule modal -->
+  <div class="modal fade" [class.show]="showScheduleModal" [style.display]="showScheduleModal ? 'block' : 'none'" *ngIf="showScheduleModal && editingScheduleAdId !== null" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i> {{ getTranslation('advertisementSchedule') || 'Advertisement Schedule' }}</h5>
+          <button type="button" class="btn-close" (click)="closeScheduleModal()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3" *ngIf="screenRegions.length > 0">
+            <label class="form-label">{{ getTranslation('assignToRegion') || 'Assign to Region' }}</label>
+            <select class="form-select" [(ngModel)]="scheduleFormData.regionId">
+              <option [ngValue]="null">{{ getTranslation('noRegion') || 'No Region' }}</option>
+              <option *ngFor="let region of getSortedRegions(); let i = index" [ngValue]="region.id">{{ i + 1 }} of {{ screenRegions.length }}</option>
+            </select>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">{{ getTranslation('startDate') || 'Start Date' }}</label>
+              <input type="date" class="form-control" [(ngModel)]="scheduleFormData.startDate">
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ getTranslation('startTime') || 'Start Time' }}</label>
+              <input type="time" class="form-control" [(ngModel)]="scheduleFormData.startTime">
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">{{ getTranslation('endDate') || 'End Date' }}</label>
+              <input type="date" class="form-control" [(ngModel)]="scheduleFormData.endDate">
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ getTranslation('endTime') || 'End Time' }}</label>
+              <input type="time" class="form-control" [(ngModel)]="scheduleFormData.endTime">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ getTranslation('priority') || 'Priority' }}</label>
+            <input type="number" class="form-control" min="0" max="100" [(ngModel)]="scheduleFormData.priority">
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="scheduleActive" [(ngModel)]="scheduleFormData.isActive">
+            <label class="form-check-label" for="scheduleActive">{{ getTranslation('active') || 'Active' }}</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeScheduleModal()">{{ getTranslation('cancel') || 'Cancel' }}</button>
+          <button type="button" class="btn btn-primary" (click)="saveAdvertisementSchedule()">{{ getTranslation('save') || 'Save' }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showScheduleModal" [style.display]="showScheduleModal ? 'block' : 'none'" (click)="closeScheduleModal()"></div>
+</div>

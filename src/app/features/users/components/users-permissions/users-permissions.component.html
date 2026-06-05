@@ -1,0 +1,562 @@
+
+<div class="users-permissions-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- 2FA Panel (for current logged-in user) -->
+ 
+  <div class="twofa-panel">
+  
+
+    <div class="twofa-body">
+      <div class="alert" *ngIf="twoFactorMessage" [ngClass]="twoFactorMessageType === 'success' ? 'alert-success' : 'alert-danger'">
+        {{ twoFactorMessage }}
+      </div>
+
+      <div class="twofa-grid">
+        <!-- Left 6 columns: email/password + generate button stacked -->
+        <div class="twofa-left">
+          <div class="twofa-stack">
+            <div class="twofa-field">
+              <label>Username / Email</label>
+              <input class="form-control compact-input" type="text" [(ngModel)]="currentUsernameFor2FA" name="twofaUsername" readonly>
+            </div>
+
+            <div class="twofa-field">
+              <label>{{ getTranslation('password') }}</label>
+              <input class="form-control compact-input" type="password" [(ngModel)]="twoFactorPassword" name="twofaPassword" autocomplete="current-password">
+            </div>
+
+            <div class="twofa-field twofa-field-actions" *ngIf="twoFactorEnabled !== true">
+              <label class="sr-only">Actions</label>
+              <button class="btn btn-primary compact-btn w-100" type="button" (click)="start2FASetup()" [disabled]="isLoading">
+                <i class="fas fa-qrcode"></i>
+                Generate QR
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 6 columns: OTP + QR -->
+        <div class="twofa-right">
+          <!-- Setup/Enable flow (QR available) -->
+          <div class="twofa-right-inner" *ngIf="twoFactorEnabled !== true && twoFactorQrDataUrl">
+            <div class="twofa-field">
+              <label>6-digit code</label>
+              <div class="otp-inputs" role="group" aria-label="6-digit code">
+                <input
+                  *ngFor="let _d of twoFactorSetupDigits; let i = index"
+                  class="otp-input"
+                  [id]="'setup-otp-' + i"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="1"
+                  [attr.autocomplete]="i === 0 ? 'one-time-code' : 'off'"
+                  [(ngModel)]="twoFactorSetupDigits[i]"
+                  [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onOtpChange('setup', i, $event)"
+                  (keydown)="onOtpKeyDown('setup', i, $event)">
+              </div>
+            </div>
+
+            <div class="twofa-field twofa-field-actions">
+              <label class="sr-only">Actions</label>
+              <button class="btn btn-success compact-btn w-100" type="button" (click)="confirm2FASetup()" [disabled]="isLoading">
+                <i class="fas fa-check"></i>
+                Enable 2FA
+              </button>
+            </div>
+
+            <div class="twofa-qr-card">
+              <div class="twofa-qr-title">
+                <i class="fas fa-mobile-alt"></i>
+                <span>Scan with Google Authenticator</span>
+              </div>
+              <div class="twofa-qr">
+                <img [src]="twoFactorQrDataUrl" alt="2FA QR Code">
+              </div>
+            </div>
+          </div>
+
+          <!-- Placeholder (keeps layout stable before Generate QR) -->
+          <div class="twofa-right-inner twofa-right-placeholder" *ngIf="twoFactorEnabled !== true && !twoFactorQrDataUrl">
+            <div class="placeholder-title">
+              <i class="fas fa-qrcode"></i>
+              <span>QR will appear here</span>
+            </div>
+            <div class="placeholder-text">
+              Click <strong>Generate QR</strong> on the left, then enter the 6‑digit code to enable 2FA.
+            </div>
+          </div>
+
+          <!-- Disable flow (no QR) -->
+          <div class="twofa-right-inner" *ngIf="twoFactorEnabled === true">
+            <div class="twofa-field">
+              <label>6-digit code</label>
+              <div class="otp-inputs" role="group" aria-label="6-digit code">
+                <input
+                  *ngFor="let _d of twoFactorDisableDigits; let i = index"
+                  class="otp-input"
+                  [id]="'disable-otp-' + i"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="1"
+                  [attr.autocomplete]="i === 0 ? 'one-time-code' : 'off'"
+                  [(ngModel)]="twoFactorDisableDigits[i]"
+                  [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onOtpChange('disable', i, $event)"
+                  (keydown)="onOtpKeyDown('disable', i, $event)">
+              </div>
+            </div>
+
+            <div class="twofa-field twofa-field-actions">
+              <label class="sr-only">Actions</label>
+              <button class="btn btn-danger compact-btn w-100" type="button" (click)="disable2FAForCurrentUser()" [disabled]="isLoading">
+                <i class="fas fa-ban"></i>
+                Disable 2FA
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Confirm Dialog -->
+  <app-confirm-dialog
+    [visible]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="onCancelDelete()">
+  </app-confirm-dialog>
+
+  <!-- Success Banner -->
+  <div class="success-banner" *ngIf="showSuccessBanner">
+    <i class="fas fa-check-circle"></i>
+    <span>{{ getTranslation('modifiedSuccessfully') }}</span>
+    <button class="close-banner" (click)="showSuccessBanner = false">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <!-- Compact Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">
+          <i class="fas fa-users"></i>
+          {{ getTranslation('configureUserAccountsAndPermissions') }}
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button 
+          type="button" 
+          class="btn btn-primary compact-btn"
+          (click)="showUserList = false; errorMessage = ''"
+          *ngIf="!editingUser">
+          <i class="fas fa-plus"></i>
+          {{ getTranslation('addNewUser') }}
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-secondary compact-btn"
+          (click)="showUserList = true; loadUsers()"
+          *ngIf="!editingUser">
+          <i class="fas fa-list"></i>
+          {{ getTranslation('showUserList') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Form Section -->
+  <div class="user-form-section" *ngIf="!showUserList">
+    <div class="form-card compact-form">
+      <div class="form-title">
+        <i class="fas fa-user-edit"></i>
+        {{ editingUser ? getTranslation('editUser') : getTranslation('addNewUser') }}
+      </div>
+      
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()">
+        <!-- Error Message (only show form-related errors, not load errors) -->
+        <div class="alert alert-danger" *ngIf="errorMessage && !showUserList">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+        
+        <!-- Loading Indicator -->
+        <div class="loading-overlay" *ngIf="isLoading">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        
+        <!-- Compact User Information Grid -->
+        <div class="user-info-grid compact-grid">
+          <div class="info-card">
+            <label for="username">{{ getTranslation('username') }} *</label>
+            <input 
+              type="text" 
+              id="username" 
+              formControlName="username" 
+              class="form-control compact-input"
+              [placeholder]="getTranslation('enterUsername')">
+          </div>
+          
+          <div class="info-card">
+            <label for="email">{{ getTranslation('email') }} *</label>
+            <input 
+              type="email" 
+              id="email" 
+              formControlName="email" 
+              class="form-control compact-input"
+              [placeholder]="getTranslation('enterEmail')">
+          </div>
+          
+          <div class="info-card">
+            <label for="password">{{ getTranslation('password') }} {{ editingUser ? '' : '*' }}</label>
+            <input 
+              type="password" 
+              id="password" 
+              formControlName="password" 
+              class="form-control compact-input"
+              [placeholder]="editingUser ? getTranslation('enterPasswordToChange') : getTranslation('enterPassword')"
+              [class.is-invalid]="userForm.get('password')?.invalid && userForm.get('password')?.touched">
+            <div class="invalid-feedback" *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.touched">
+              <span *ngIf="userForm.get('password')?.errors?.['required']">{{ getTranslation('passwordRequired') }}</span>
+              <span *ngIf="userForm.get('password')?.errors?.['minlength']">{{ getTranslation('passwordMinLength') }}</span>
+            </div>
+            <small class="form-text text-muted" *ngIf="editingUser">
+              {{ getTranslation('leavePasswordEmptyToKeepCurrent') }}
+            </small>
+          </div>
+          
+          <div class="info-card">
+            <label for="phone1">{{ getTranslation('phone1') }} *</label>
+            <input 
+              type="tel" 
+              id="phone1" 
+              formControlName="phone1" 
+              class="form-control compact-input"
+              [placeholder]="getTranslation('enterPhone1')">
+          </div>
+          
+          <div class="info-card">
+            <label for="phone2">{{ getTranslation('phone2') }}</label>
+            <input 
+              type="tel" 
+              id="phone2" 
+              formControlName="phone2" 
+              class="form-control compact-input"
+              [placeholder]="getTranslation('enterSubMobileNo')">
+          </div>
+          
+          <div class="info-card">
+            <label for="subsiteId">{{ getTranslation('subsites') }}</label>
+            <select id="subsiteId" formControlName="subsiteId" class="form-control compact-input">
+              <option [ngValue]="null">{{ getTranslation('selectSubsite') }}</option>
+              <option *ngFor="let subsite of subsites" [ngValue]="subsite.id">{{ subsite.name }}</option>
+            </select>
+          </div>
+          
+          <div class="info-card">
+            <label for="sectionId">{{ getTranslation('section') }}</label>
+            <select id="sectionId" formControlName="sectionId" class="form-control compact-input">
+              <option [ngValue]="null">{{ getTranslation('selectSection') }}</option>
+              <option *ngFor="let section of sections" [ngValue]="section.id">{{ section.name }}</option>
+            </select>
+          </div>
+          
+          <!-- <div class="info-card">
+            <label for="specialDivisionId">{{ getTranslation('specialDivisions') }}</label>
+            <select id="specialDivisionId" formControlName="specialDivisionId" class="form-control compact-input">
+              <option [ngValue]="null">{{ getTranslation('selectSpecialDivision') }}</option>
+              <option *ngFor="let division of specialDivisions" [ngValue]="division.id">{{ division.name }}</option>
+            </select>
+          </div> -->
+          
+          <div class="info-card">
+            <label for="userType">{{ getTranslation('type') }} *</label>
+            <select id="userType" formControlName="userType" class="form-control compact-input">
+              <option value="regular-user">{{ getTranslation('regularUser') }}</option>
+              <option value="admin-user">{{ getTranslation('adminUser') }}</option>
+              <option value="super-user">{{ getTranslation('superUser') }}</option>
+            </select>
+          </div>
+          
+          <div class="info-card">
+            <label for="validity">{{ getTranslation('validity') }} *</label>
+            <select id="validity" formControlName="validity" class="form-control compact-input">
+              <option value="manager">{{ getTranslation('manager') }}</option>
+              <option value="supervisor">{{ getTranslation('supervisor') }}</option>
+              <option value="coordinator">{{ getTranslation('coordinator') }}</option>
+            </select>
+          </div>
+          
+          <div class="info-card notes-card">
+            <label for="notes">{{ getTranslation('notes') }}</label>
+            <textarea 
+              id="notes" 
+              formControlName="notes" 
+              class="form-control compact-input"
+              rows="2"
+              [placeholder]="getTranslation('enterNotes')"></textarea>
+          </div>
+        </div>
+
+        <!-- Compact Permissions Section -->
+        <div class="permissions-section compact-permissions">
+          <h4 class="permissions-title">
+            <i class="fas fa-shield-alt"></i>
+            {{ getTranslation('permissions') }}
+          </h4>
+          
+          <div class="permissions-grid compact-permissions-grid">
+            <!-- Accounts & Authorizations -->
+            <div class="permission-column compact-column">
+              <h5 class="column-title">{{ getTranslation('accountsAndAuthorizations') }}</h5>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="addModifyAccounts" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('authorityToAddModifyAccounts') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="viewAccounts" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('authorityToViewAccounts') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="deleteAccounts" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('authorityToDeleteAccounts') }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Ads -->
+            <div class="permission-column compact-column">
+              <h5 class="column-title">{{ getTranslation('ads') }}</h5>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="addModifyAds" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('authorityToAddModifyAds') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="displayAds" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('authorityToDisplayAds') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="deleteAds" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('authorityToDeleteAds') }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Subsites -->
+            <div class="permission-column compact-column">
+              <h5 class="column-title">{{ getTranslation('subsites') }}</h5>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="addModifySites" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('permissionToAddModifySites') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="viewSites" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('permissionToViewSites') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="deleteSites" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('permissionToDeleteSites') }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Other Powers -->
+          <div class="other-powers-section compact-other-powers">
+            <h5 class="section-title">{{ getTranslation('otherPowers') }}</h5>
+            <div class="other-powers-grid compact-other-grid">
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="notificationSending" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('notificationSendingPermission') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="notificationViewing" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('notificationViewingPermission') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="notificationDeletion" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('notificationDeletionPermission') }}</span>
+                </label>
+              </div>
+              <div class="permission-item compact-item">
+                <label class="checkbox-label compact-checkbox">
+                  <input type="checkbox" formControlName="isActive" class="form-check-input">
+                  <span class="checkbox-text">{{ getTranslation('active') }}?</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Form Actions -->
+        <div class="form-actions compact-actions">
+          <button 
+            type="button" 
+            class="btn btn-secondary compact-btn"
+            (click)="editingUser ? cancelEdit() : (showUserList = true)">
+            {{ editingUser ? getTranslation('cancel') : getTranslation('cancelAndShowList') }}
+          </button>
+          <button type="submit" class="btn btn-primary compact-btn" [disabled]="!userForm.valid">
+            {{ editingUser ? getTranslation('saveChanges') : getTranslation('save') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Compact Users List -->
+  <div class="users-list" *ngIf="showUserList">
+    <!-- Error Message for List -->
+    <div class="alert alert-danger" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+    
+    <div class="list-header compact-header">
+      <span class="total-count">{{ getTranslation('totalUsers') }}: {{ filteredUsers.length }}</span>
+    </div>
+    
+    <div class="table-container compact-table">
+      <table class="users-table compact-users-table">
+        <thead>
+          <tr>
+            <th>{{ getTranslation('username') }}</th>
+            <th>{{ getTranslation('email') }}</th>
+            <th>{{ getTranslation('phone1') }}</th>
+            <th>{{ getTranslation('subsites') }}</th>
+            <th>{{ getTranslation('section') }}</th>
+            <th>{{ getTranslation('type') }}</th>
+            <th>{{ getTranslation('validity') }}</th>
+            <th>{{ getTranslation('status') }}</th>
+            <th>{{ getTranslation('actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of paginatedUsers" [class]="user.isActive ? 'active' : 'inactive'">
+            <td class="username-cell">
+              <div class="user-info">
+                <div class="user-avatar">
+                  <i class="fas fa-user"></i>
+                </div>
+                <span class="user-name">{{ user.username }}</span>
+              </div>
+            </td>
+            <td class="email-cell">
+              <span class="email-text">{{ user.email }}</span>
+            </td>
+            <td class="phone-cell">
+              <span class="phone-text">{{ user.phone1 }}</span>
+            </td>
+            <td class="subsites-cell">
+              <span class="subsites-text">{{ user.subsiteName || getSubsiteName(user.subsiteId) }}</span>
+            </td>
+            <td class="section-cell">
+              <span class="section-text">{{ user.sectionName || getSectionName(user.sectionId) }}</span>
+            </td>
+            <td class="type-cell">
+              <span class="type-badge" [class]="user.userType">
+                {{ getTypeDisplayName(user.userType) }}
+              </span>
+            </td>
+            <td class="validity-cell">
+              <span class="validity-text">{{ getValidityDisplayName(user.validity) }}</span>
+            </td>
+            <td class="status-cell">
+              <span class="status-badge" [class]="user.isActive ? 'active' : 'inactive'">
+                {{ user.isActive ? getTranslation('active') : getTranslation('inactive') }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button 
+                  class="btn btn-sm btn-primary" 
+                  (click)="editUser(user)"
+                  [title]="getTranslation('edit')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                  class="btn btn-sm btn-danger" 
+                  (click)="deleteUser(user.id)"
+                  [title]="getTranslation('delete')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Compact Pagination -->
+    <div class="pagination-container compact-pagination" *ngIf="filteredUsers.length > 0">
+      <div class="pagination">
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">
+          {{ getTranslation('previous') }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="currentPage === 1" (click)="goToPage(1)">
+          {{ getTranslation('first') }}
+        </button>
+        
+        <ng-container *ngFor="let page of getVisiblePages()">
+          <button 
+            class="btn btn-sm" 
+            [class]="page === currentPage ? 'btn-primary' : 'btn-outline-secondary'"
+            (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </ng-container>
+        
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">
+          {{ getTranslation('next') }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="currentPage >= totalPages" (click)="goToPage(totalPages)">
+          {{ getTranslation('last') }}
+        </button>
+      </div>
+      
+      <div class="pagination-info compact-pagination-info">
+        <span class="page-info">
+          {{ getTranslation('showing') }} {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }} {{ getTranslation('of') }} {{ filteredUsers.length }}
+        </span>
+        <div class="items-per-page">
+          <label>{{ getTranslation('itemsPerPage') }}:</label>
+          <select [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()" class="form-control compact-select">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <div class="empty-state" *ngIf="filteredUsers.length === 0">
+      <i class="fas fa-users"></i>
+      <p>{{ getTranslation('noUsersFound') }}</p>
+    </div>
+  </div>
+</div>

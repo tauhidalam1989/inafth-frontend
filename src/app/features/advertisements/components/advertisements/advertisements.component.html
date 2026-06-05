@@ -1,0 +1,370 @@
+<div class="advertisements-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-ad"></i>
+        {{ getTranslation('advertisements') }}
+      </h1>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="showAddForm = !showAddForm">
+          <i class="fas fa-plus"></i>
+          {{ getTranslation('addAdvertisement') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Advertisement Form -->
+  <div class="add-advertisement-form" *ngIf="showAddForm">
+    <div class="form-card">
+      <h3 class="form-title">
+        {{ editingAdvertisement ? (getTranslation('editAdvertisement') || 'Edit Advertisement') : getTranslation('addNewAdvertisement') }}
+      </h3>
+      
+      <form [formGroup]="advertisementForm" (ngSubmit)="addAdvertisement()">
+        <!-- Input Method Toggle -->
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>{{ getTranslation('inputMethod') || 'Input Method' }}</label>
+            <div class="input-method-toggle">
+              <button 
+                type="button"
+                class="btn btn-sm" 
+                [class.btn-primary]="inputMethod === 'file'"
+                [class.btn-outline-secondary]="inputMethod !== 'file'"
+                (click)="inputMethod = 'file'; onInputMethodChange()">
+                <i class="fas fa-upload me-1"></i>
+                {{ getTranslation('uploadFile') || 'Upload File' }}
+              </button>
+              <button 
+                type="button"
+                class="btn btn-sm" 
+                [class.btn-primary]="inputMethod === 'url'"
+                [class.btn-outline-secondary]="inputMethod !== 'url'"
+                (click)="inputMethod = 'url'; onInputMethodChange()">
+                <i class="fas fa-link me-1"></i>
+                {{ getTranslation('enterUrl') || 'Enter URL' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Upload (shown when inputMethod is 'file') - multiple images/videos supported -->
+        <div class="form-row" *ngIf="inputMethod === 'file'">
+          <div class="form-group full-width">
+            <label for="file">{{ getTranslation('uploadFile') }} *</label>
+            <input 
+              type="file" 
+              id="file" 
+              (change)="onFileSelected($event)"
+              [multiple]="!editingAdvertisement"
+              accept="image/*,video/*,.ppt,.pptx,.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.ico,.tiff,.tif,.heic,.heif,.avif,.jfif,.mp4,.webm,.ogg,.mov,.avi,.mkv"
+              class="form-control">
+            <small class="form-text text-muted">
+              {{ getTranslation('supportedFormatsMultiple') || 'Supported: Images, Videos, Presentations (PPT/PPTX), Documents (PDF/DOC/DOCX). Select multiple files to create multiple ads at once.' }}
+            </small>
+            <div class="selected-files-list mt-2" *ngIf="selectedFiles.length > 0">
+              <span class="text-muted small">{{ selectedFiles.length }} {{ getTranslation('filesSelected') || 'file(s) selected' }}:</span>
+              <ul class="list-unstyled small mb-0 mt-1">
+                <li *ngFor="let f of selectedFiles" class="d-flex align-items-center gap-2 py-1">
+                  <i class="fas fa-file-image text-info" *ngIf="f.type.startsWith('image/')"></i>
+                  <i class="fas fa-file-video text-primary" *ngIf="f.type.startsWith('video/')"></i>
+                  <i class="fas fa-file" *ngIf="!f.type.startsWith('image/') && !f.type.startsWith('video/')"></i>
+                  {{ f.name }} <span class="text-muted">({{ (f.size / 1024).toFixed(1) }} KB)</span>
+                </li>
+              </ul>
+            </div>
+            <div class="file-preview" *ngIf="filePreview && selectedFiles.length > 0">
+              <img [src]="filePreview" alt="Preview" *ngIf="selectedFiles[0].type.startsWith('image/')">
+              <div class="file-info" *ngIf="!selectedFiles[0].type.startsWith('image/') && selectedFiles.length === 1">
+                <i class="fas fa-file"></i>
+                {{ selectedFiles[0].name }}
+              </div>
+              <div class="file-info" *ngIf="selectedFiles.length > 1 && !selectedFiles[0].type.startsWith('image/')">
+                <i class="fas fa-files"></i>
+                {{ getTranslation('multipleFilesSelected') || 'Multiple files selected' }}
+              </div>
+            </div>
+            <!-- Upload Progress Bar -->
+            <div class="upload-progress" *ngIf="isUploading">
+              <div class="progress-bar-container">
+                <div class="progress-bar" [style.width.%]="uploadProgress"></div>
+              </div>
+              <small class="progress-text">{{ uploadProgress }}% uploaded</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- URL Input (shown when inputMethod is 'url') -->
+        <div class="form-row" *ngIf="inputMethod === 'url'">
+          <div class="form-group full-width">
+            <label for="fileUrl">{{ getTranslation('fileUrl') || 'File URL' }} *</label>
+            <input 
+              type="url" 
+              id="fileUrl" 
+              formControlName="fileUrl"
+              (input)="onUrlInput($event)"
+              (blur)="onUrlInput($event)"
+              (change)="onUrlInput($event)"
+              class="form-control"
+              [placeholder]="getTranslation('enterFileUrl') || 'Enter file URL (e.g., https://example.com/video.mp4)'">
+            <small class="form-text text-muted">
+              {{ getTranslation('urlHint') || 'Enter a direct link to an image, video, or document file' }}
+            </small>
+            <div class="file-preview" *ngIf="filePreview && !selectedFile">
+              <img [src]="filePreview" alt="Preview" *ngIf="isImageUrl(advertisementForm.value.fileUrl)">
+              <div class="file-info" *ngIf="!isImageUrl(advertisementForm.value.fileUrl) && advertisementForm.value.fileUrl">
+                <i class="fas fa-link"></i>
+                {{ advertisementForm.value.fileUrl }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Title and Status -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="title">{{ getTranslation('title') }} *</label>
+            <input 
+              type="text" 
+              id="title" 
+              formControlName="title" 
+              class="form-control"
+              [placeholder]="getTranslation('enterTitle')">
+          </div>
+          <div class="form-group">
+            <label for="status">{{ getTranslation('status') }} *</label>
+            <select id="status" formControlName="status" class="form-control">
+              <option value="draft">{{ getTranslation('draft') }}</option>
+              <option value="active">{{ getTranslation('active') }}</option>
+              <option value="inactive">{{ getTranslation('inactive') }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="description">{{ getTranslation('description') }}</label>
+            <textarea 
+              id="description" 
+              formControlName="description" 
+              class="form-control"
+              rows="3"
+              [placeholder]="getTranslation('enterDescription')"></textarea>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          {{ errorMessage }}
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelForm()">
+            {{ getTranslation('cancel') }}
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="isLoading || advertisementForm.invalid">
+            <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+            {{ editingAdvertisement ? (getTranslation('saveChanges') || 'Save Changes') : (getTranslation('saveAdvertisement') || 'Save Advertisement') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="search-filter">
+        <div class="search-input">
+          <i class="fas fa-search"></i>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            (input)="filterAdvertisements()"
+            [placeholder]="getTranslation('searchAdvertisements')"
+            class="form-control">
+        </div>
+      </div>
+      <div class="type-filter">
+        <label class="filter-label">
+          <i class="fas fa-filter"></i>
+          {{ getTranslation('type') }}
+        </label>
+        <select [(ngModel)]="selectedType" (change)="filterAdvertisements()" class="form-control">
+          <option value="all">{{ getTranslation('allTypes') }}</option>
+          <option value="image">{{ getTranslation('image') }}</option>
+          <option value="video">{{ getTranslation('video') }}</option>
+          <option value="presentation">{{ getTranslation('presentation') }}</option>
+          <option value="document">{{ getTranslation('document') }}</option>
+        </select>
+      </div>
+      <div class="status-filter">
+        <label class="filter-label">
+          <i class="fas fa-tag"></i>
+          {{ getTranslation('status') }}
+        </label>
+        <select [(ngModel)]="selectedStatus" (change)="filterAdvertisements()" class="form-control">
+          <option value="all">{{ getTranslation('allStatuses') }}</option>
+          <option value="draft">{{ getTranslation('draft') }}</option>
+          <option value="active">{{ getTranslation('active') }}</option>
+          <option value="inactive">{{ getTranslation('inactive') }}</option>
+          <option value="expired">{{ getTranslation('expired') }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advertisements List Section -->
+  <div class="advertisements-list-section">
+    <div class="list-header">
+      <div class="total-count">
+        <i class="fas fa-list me-2"></i>
+        {{ getTranslation('totalAdvertisements') }}: {{ totalAdvertisements }}
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="advertisements-table">
+        <thead>
+          <tr>
+            <th>{{ getTranslation('title') }}</th>
+            <th>{{ getTranslation('type') }}</th>
+            <th>{{ getTranslation('file') }}</th>
+            <th>{{ getTranslation('preview') || 'Preview' }}</th>
+            <th>{{ getTranslation('status') }}</th>
+            <th>{{ getTranslation('actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let advertisement of filteredAdvertisements">
+            <td class="title-cell">
+              <strong>{{ advertisement.title }}</strong>
+              <div class="description" *ngIf="advertisement.description">
+                {{ advertisement.description }}
+              </div>
+            </td>
+            <td class="type-cell">
+              <span class="type-badge" [class]="advertisement.type">
+                {{ getTypeDisplayName(advertisement.type) }}
+              </span>
+            </td>
+            <td class="file-cell">
+              <a [href]="getFileUrl(advertisement.fileUrl)" target="_blank" rel="noopener noreferrer" class="file-link">
+                <i class="fas fa-file"></i>
+                {{ decodeFileNameForDisplay(advertisement.fileName) }}
+              </a>
+            </td>
+            <td class="preview-cell">
+              <a
+                *ngIf="advertisement.fileUrl && (advertisement.type === 'image' || isImageUrl(advertisement.fileUrl))"
+                [href]="getFileUrl(advertisement.thumbnailUrl || advertisement.fileUrl)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="preview-link"
+              >
+                <img
+                  [src]="getFileUrl(advertisement.thumbnailUrl || advertisement.fileUrl)"
+                  [alt]="advertisement.title"
+                  class="preview-thumb"
+                  loading="lazy"
+                />
+              </a>
+              <a
+                *ngIf="advertisement.fileUrl && advertisement.type === 'video'"
+                [href]="getFileUrl(advertisement.fileUrl)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="preview-link"
+              >
+                <video
+                  class="preview-thumb preview-video"
+                  [src]="getFileUrl(advertisement.fileUrl)"
+                  muted
+                  playsinline
+                  preload="metadata"
+                ></video>
+              </a>
+              <span
+                *ngIf="!(advertisement.fileUrl && ((advertisement.type === 'image' || isImageUrl(advertisement.fileUrl)) || advertisement.type === 'video'))"
+                class="preview-empty"
+              >—</span>
+            </td>
+            <td class="status-cell">
+              <span class="status-badge" [class]="advertisement.status">
+                {{ getStatusDisplayName(advertisement.status) }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <button 
+                  class="btn btn-sm btn-outline-primary" 
+                  (click)="editAdvertisement(advertisement)" 
+                  [title]="getTranslation('edit')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                  class="btn btn-sm btn-outline-danger" 
+                  (click)="deleteAdvertisement(advertisement)" 
+                  [title]="getTranslation('delete')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="filteredAdvertisements.length === 0 && !isLoading" class="empty-state">
+        <i class="fas fa-ad"></i>
+        <p>{{ getTranslation('noAdvertisementsFound') }}</p>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="empty-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>{{ getTranslation('loading') }}</p>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ errorMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section" *ngIf="totalPages > 1">
+    <nav aria-label="Advertisements pagination">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" (click)="onPageChange(currentPage - 1)" [attr.aria-disabled]="currentPage === 1">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+        </li>
+        <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index" [class.active]="currentPage === i + 1">
+          <a class="page-link" (click)="onPageChange(i + 1)">{{ i + 1 }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" (click)="onPageChange(currentPage + 1)" [attr.aria-disabled]="currentPage === totalPages">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Confirm Delete Dialog -->
+  <app-confirm-dialog
+    [visible]="showConfirmDialog"
+    [data]="confirmDialogData"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="onCancelDelete()"
+  ></app-confirm-dialog>
+</div>

@@ -1,0 +1,94 @@
+<div class="screen-list-container" [dir]="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="page-title">
+            <i class="fas fa-list me-2"></i>
+            {{ getTranslation('screenList') || 'Screen List' }}
+          </h2>
+          <a routerLink="/screens/create" class="btn btn-success">
+            <i class="fas fa-plus-circle me-2"></i>
+            {{ getTranslation('createScreen') || 'Create Screen' }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screens Table -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-tv me-2"></i>
+              {{ getTranslation('registeredScreens') || 'Registered Screens' }}
+              <span class="badge bg-primary ms-2">{{ screens.length }}</span>
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>{{ getTranslation('name') || 'Name' }}</th>
+                    <th>{{ getTranslation('ipAddress') || 'IP Address' }}</th>
+                    <th>{{ getTranslation('location') || 'Location' }}</th>
+                    <th>{{ getTranslation('group') || 'Group' }}</th>
+                    <th>{{ getTranslation('assignedUser') || 'Assigned User' }}</th>
+                    <th>{{ getTranslation('status') || 'Status' }}</th>
+                    <th>{{ getTranslation('actions') || 'Actions' }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let screen of screens">
+                    <td>{{ screen.name }}</td>
+                    <td>{{ screen.ipAddress || '-' }}</td>
+                    <td>
+                      <span *ngIf="screen.subsiteName || screen.sectionName || screen.specialDivisionName">
+                        {{ screen.subsiteName || '' }}<span *ngIf="screen.sectionName"> / {{ screen.sectionName }}</span><span *ngIf="screen.specialDivisionName"> / {{ screen.specialDivisionName }}</span>
+                      </span>
+                      <span *ngIf="!screen.subsiteName && !screen.sectionName && !screen.specialDivisionName" class="text-muted">-</span>
+                    </td>
+                    <td>{{ screen.groupName || '-' }}</td>
+                    <td>{{ screen.assignedUserName || '-' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="{
+                        'bg-success': screen.status === 'online',
+                        'bg-warning': screen.status === 'playing',
+                        'bg-secondary': screen.status === 'offline'
+                      }">
+                        {{ screen.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm">
+                        <button class="btn btn-primary" (click)="editScreen(screen)" [title]="getTranslation('edit') || 'Edit'">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger" (click)="deleteScreen(screen.id)" [title]="getTranslation('delete') || 'Delete'">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="screens.length === 0">
+                    <td colspan="7" class="text-center py-5">
+                      <i class="fas fa-tv fa-3x text-muted mb-3"></i>
+                      <p class="text-muted">{{ getTranslation('noScreensFound') || 'No screens found' }}</p>
+                      <a routerLink="/screens/create" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        {{ getTranslation('createScreen') || 'Create Screen' }}
+                      </a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
